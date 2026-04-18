@@ -1,0 +1,106 @@
+/* ─── OpenClaw USB 公共样式 ─────────────────────────────────────────────────
+ * launcher.html 和 setup.html 共享的颜色变量、基础样式、组件样式
+ * 修改颜色只需改这一处，两个页面自动同步
+ * ─────────────────────────────────────────────────────────────────────────── */
+
+:root {
+  /* 背景色阶 */
+  --bg-base:      #0b0b1a;
+  --bg-titlebar:  #08081a;
+  --bg-surface:   #141425;
+  --bg-input:     #0e0e1e;
+
+  /* 文字色阶 */
+  --text-primary: #e8e0e0;
+  --text-dim:     #6b6b8a;
+  --text-medium:  #7a7a9a;
+  --text-muted:   #454560;
+  --text-subtle:  #535370;
+
+  /* 主题色 */
+  --color-accent: #e74856;
+  --color-accent-dark: #c92a3a;
+  --color-teal:   #4ecdc4;
+  --color-teal-dark: #2eaa9e;
+  --color-warning: #ffaa44;
+  --color-warning-dark: #e68a00;
+  --color-info:   #667eea;
+
+  /* 边框 */
+  --border-color: #1e1e35;
+  --border-light: #252540;
+  --border-highlight: #2a2a45;
+}
+
+/* ─── Reset ─── */
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body {
+  font-family: 'Microsoft YaHei', 'Segoe UI', Arial, sans-serif;
+  background: var(--bg-base);
+  color: var(--text-primary);
+  height: 100vh;
+  overflow: hidden;
+  user-select: none;
+}
+
+/* ─── Titlebar ─── */
+.titlebar {
+  -webkit-app-region: drag;
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 0 16px; height: 40px;
+  background: var(--bg-titlebar);
+  border-bottom: 1px solid var(--border-color);
+}
+.titlebar-title {
+  display: flex; align-items: center; gap: 8px;
+  font-size: 13px; color: var(--text-medium);
+}
+.titlebar-controls {
+  -webkit-app-region: no-drag;
+  display: flex; gap: 8px;
+}
+.titlebar-btn {
+  width: 14px; height: 14px; border-radius: 50%;
+  border: none; cursor: pointer; transition: opacity .15s;
+}
+.titlebar-btn:hover { opacity: .8; }
+.btn-minimize { background: var(--color-warning); }
+.btn-close    { background: var(--color-accent); }
+
+/* ─── Scrollbar ─── */
+::-webkit-scrollbar { width: 4px; }
+::-webkit-scrollbar-thumb { background: var(--border-light); border-radius: 2px; }
+
+/* ─── Spinner ─── */
+.spinner {
+  display: inline-block;
+  border: 2px solid rgba(255,255,255,.3);
+  border-radius: 50%;
+  border-top-color: #fff;
+  animation: spin .8s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* ─── USB 拔出警告覆层 ─── */
+.usb-warning, .overlay {
+  position: fixed; inset: 0;
+  background: rgba(11,11,26,.95);
+  display: none; flex-direction: column;
+  align-items: center; justify-content: center;
+  gap: 16px; z-index: 999; text-align: center;
+}
+.usb-warning.show, .overlay.show { display: flex; }
+.usb-warning h2, .overlay h2 { font-size: 22px; color: var(--color-accent); }
+.usb-warning p, .overlay p   { font-size: 13px; color: var(--text-medium); }
+
+/* ─── 通用隐藏 ─── */
+.hidden { display: none !important; }
+
+/* ─── 渐变标题文字（共享） ─── */
+.gradient-title {
+  font-weight: 700;
+  background: linear-gradient(135deg, var(--color-accent), #ff8a80, var(--color-teal));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}

@@ -1,0 +1,31 @@
+# 依赖 & 构建产物
+node_modules/
+dist/
+*.log
+
+# 开发数据（本地 workspace、sqlite、memory）
+dev-data/
+
+# 授权/密钥相关（绝不能进 git 历史）
+private.pem
+license.key
+*.pem.bak
+*.key.bak
+
+# 用户运行时生成的配置（包含 API Key 等敏感信息）
+setup.json
+openclaw.json
+openclaw.json.bak
+openclaw.json.pre-repair.bak
+.license.bak
+
+# 系统/编辑器
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+*.swp
+
+# 临时文件
+*.tmp
+*.bak

@@ -1,0 +1,676 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>OpenClaw 初始化配置</title>
+<link rel="stylesheet" href="styles/common.css">
+<style>
+/* setup.html 页面特有样式 */
+
+/* ── Step indicator ── */
+.step-nav {
+  display:flex; align-items:center; justify-content:center;
+  gap:0; padding:14px 40px 0;
+}
+.snav-item { display:flex; flex-direction:column; align-items:center; gap:5px; }
+.snav-circle {
+  width:30px; height:30px; border-radius:50%;
+  display:flex; align-items:center; justify-content:center;
+  font-size:12px; font-weight:700;
+  background:#141425; border:2px solid #252540; color:#454560;
+  transition:all .3s;
+}
+.snav-label { font-size:10px; color:#454560; white-space:nowrap; }
+.snav-item.active .snav-circle { border-color:#e74856; background:linear-gradient(135deg,#e74856,#c92a3a); color:#fff; box-shadow:0 0 12px rgba(231,72,86,.3); }
+.snav-item.active .snav-label  { color:#e74856; }
+.snav-item.done .snav-circle   { border-color:#4ecdc4; background:#4ecdc4; color:#0b0b1a; }
+.snav-item.done .snav-label    { color:#4ecdc4; }
+.snav-line { width:48px; height:2px; background:#252540; margin-bottom:18px; transition:background .3s; }
+.snav-line.done { background:#4ecdc4; }
+
+/* ── Main content ── */
+.main { padding:12px 40px 16px; height:calc(100vh - 112px); display:flex; flex-direction:column; gap:10px; }
+
+.screen { display:none; flex-direction:column; flex:1; gap:14px; overflow-y:auto; min-height:0; }
+.screen.active { display:flex; }
+/* scrollbar 样式继承自 common.css */
+
+/* ── Screen: Welcome ── */
+.welcome-body {
+  flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center;
+  gap:16px; text-align:center;
+}
+.welcome-logo { font-size:56px; filter:drop-shadow(0 0 20px rgba(231,72,86,.35)); }
+.welcome-body h1 { font-size:24px; }
+.welcome-body p { font-size:13px; color:#6b6b8a; line-height:1.7; max-width:440px; }
+.feature-list {
+  display:flex; gap:20px; flex-wrap:wrap; justify-content:center; margin-top:4px;
+}
+.feature-item {
+  display:flex; align-items:center; gap:6px;
+  background:#141425; border:1px solid #1e1e35; border-radius:8px;
+  padding:8px 14px; font-size:12px; color:#c8c0c0;
+}
+
+/* ── Section title ── */
+.section-title { font-size:15px; font-weight:600; color:#e8e0e0; }
+.section-sub   { font-size:12px; color:#6b6b8a; margin-top:2px; }
+
+/* ── Model / Chat cards ── */
+.cards {
+  display:grid; grid-template-columns:repeat(3,1fr); gap:8px;
+}
+.cards.chat-cards { grid-template-columns:repeat(4,1fr); }
+
+.card {
+  background:#141425; border:2px solid #1e1e35; border-radius:10px;
+  padding:12px 8px; text-align:center; cursor:pointer;
+  transition:all .2s; display:flex; flex-direction:column; align-items:center; gap:6px;
+}
+.card:hover { border-color:#e74856; background:#1a1530; }
+.card.selected { border-color:#e74856; background:linear-gradient(135deg,rgba(231,72,86,.12),rgba(78,205,196,.08)); box-shadow:0 0 16px rgba(231,72,86,.15); }
+.card.disabled { opacity:.45; cursor:not-allowed; }
+.card.disabled:hover { border-color:#1e1e35; background:#141425; }
+.card-icon { font-size:22px; }
+.card-name { font-size:12px; font-weight:600; color:#e8e0e0; }
+.card-desc { font-size:10px; color:#6b6b8a; line-height:1.3; }
+.card-badge {
+  font-size:9px; background:#1e1e35; color:#7a7a9a;
+  border-radius:4px; padding:2px 5px; margin-top:2px;
+}
+.card-badge.hot  { background:rgba(231,72,86,.15);  color:#e74856; }
+.card-badge.cn   { background:rgba(78,205,196,.12); color:#4ecdc4; }
+.card-badge.soon { background:rgba(255,170,68,.12); color:#ffaa44; }
+
+/* ── Input group ── */
+.input-section {
+  background:#141425; border:1px solid #1e1e35; border-radius:10px;
+  padding:14px 18px; display:flex; flex-direction:column; gap:10px;
+  transition:all .3s;
+}
+.input-section.hidden { display:none; }
+.input-row { display:flex; flex-direction:column; gap:5px; }
+.input-row label { font-size:12px; color:#7a7a9a; }
+.input-wrap { display:flex; gap:6px; }
+.input-wrap input, input.full {
+  flex:1; background:#0e0e1e; border:1px solid #252540; border-radius:6px;
+  padding:8px 12px; color:#e8e0e0; font-size:13px; outline:none;
+  font-family:'Microsoft YaHei','Segoe UI',Arial,sans-serif;
+  transition:border-color .2s;
+}
+.input-wrap input:focus, input.full:focus { border-color:#e74856; box-shadow:0 0 8px rgba(231,72,86,.2); }
+.toggle-vis {
+  background:#1e1e35; border:none; border-radius:6px; padding:0 10px;
+  color:#7a7a9a; cursor:pointer; font-size:13px;
+}
+.toggle-vis:hover { background:#2a2a45; }
+.input-hint { font-size:11px; color:#454560; }
+.input-hint a { color:#4ecdc4; text-decoration:none; cursor:pointer; }
+.input-hint a:hover { text-decoration:underline; }
+
+/* ── Buttons ── */
+.btn-row { display:flex; gap:10px; align-items:center; }
+.btn {
+  padding:10px 28px; border:none; border-radius:8px;
+  font-size:14px; font-weight:600; cursor:pointer;
+  transition:all .2s; font-family:inherit;
+  display:flex; align-items:center; gap:6px;
+}
+.btn:disabled { opacity:.4; cursor:not-allowed; }
+.btn-primary {
+  background:linear-gradient(135deg,#e74856,#c92a3a); color:#fff; min-width:120px;
+}
+.btn-primary:hover:not(:disabled) { transform:translateY(-1px); box-shadow:0 4px 16px rgba(231,72,86,.4); }
+.btn-secondary { background:transparent; color:#4ecdc4; border:1px solid #4ecdc4; }
+.btn-secondary:hover:not(:disabled) { background:rgba(78,205,196,.08); }
+
+.spinner { width:14px; height:14px; }
+/* spin 动画继承自 common.css */
+
+/* ── Summary screen ── */
+.summary {
+  background:#141425; border:1px solid #1e1e35; border-radius:10px;
+  padding:16px 18px; display:flex; flex-direction:column; gap:8px;
+}
+.summary-row {
+  display:flex; align-items:center; gap:10px;
+  padding:6px 0; border-bottom:1px solid #1a1a30; font-size:13px;
+}
+.summary-row:last-child { border-bottom:none; }
+.summary-key { color:#6b6b8a; min-width:90px; }
+.summary-val { color:#e8e0e0; font-weight:500; }
+
+/* usb-warning 样式继承自 common.css */
+
+.hidden { display:none !important; }
+</style>
+</head>
+<body>
+
+<div class="titlebar">
+  <div class="titlebar-title">
+    <span>🦞</span>
+    <span>OpenClaw 启动器 · 初始化配置</span>
+  </div>
+  <div style="display:flex;align-items:center;gap:12px;-webkit-app-region:no-drag">
+    <a onclick="window.usb.openExternal('https://my.feishu.cn/wiki/ICDbwlmobirpgqkbHY3c8q00nbf?from=from_copylink')"
+       style="font-size:11px;color:#667eea;cursor:pointer;text-decoration:none;white-space:nowrap">📖 教学与售后</a>
+    <div class="titlebar-controls">
+      <button class="titlebar-btn btn-minimize" onclick="window.usb.minimize()"></button>
+      <button class="titlebar-btn btn-close"    onclick="window.usb.close()"></button>
+    </div>
+  </div>
+</div>
+
+<!-- Step indicator -->
+<div class="step-nav">
+  <div class="snav-item active" id="snav-0">
+    <div class="snav-circle">1</div>
+    <div class="snav-label">欢迎</div>
+  </div>
+  <div class="snav-line" id="snav-line-0"></div>
+  <div class="snav-item" id="snav-1">
+    <div class="snav-circle">2</div>
+    <div class="snav-label">AI 模型</div>
+  </div>
+  <div class="snav-line" id="snav-line-1"></div>
+  <div class="snav-item" id="snav-2">
+    <div class="snav-circle">3</div>
+    <div class="snav-label">聊天工具</div>
+  </div>
+  <div class="snav-line" id="snav-line-2"></div>
+  <div class="snav-item" id="snav-3">
+    <div class="snav-circle">4</div>
+    <div class="snav-label">完成</div>
+  </div>
+</div>
+
+<div class="main">
+
+  <!-- ── Screen 0: Welcome ── -->
+  <div class="screen active" id="screen-0">
+    <div class="welcome-body">
+      <div class="welcome-logo">🦞</div>
+      <h1 class="gradient-title">OpenClaw 启动器</h1>
+      <p>您的 AI 助手，由 U 盘钥匙授权使用。<br>
+         插入 U 盘即可启动，拔出即停止运行，<br>
+         不会在他人电脑上留下任何数据。</p>
+      <div class="feature-list">
+        <div class="feature-item">🔒 U 盘钥匙授权</div>
+        <div class="feature-item">🚫 不在电脑留痕</div>
+        <div class="feature-item">⚡ 即插即用</div>
+        <div class="feature-item">🤖 接入主流 AI</div>
+      </div>
+    </div>
+    <div class="btn-row">
+      <button class="btn btn-primary" onclick="goTo(1)">开始配置 →</button>
+    </div>
+  </div>
+
+  <!-- ── Screen 1: AI Model ── -->
+  <div class="screen" id="screen-1">
+    <div>
+      <div class="section-title">选择 AI 模型</div>
+      <div class="section-sub">选择您已有 API Key 的服务商</div>
+    </div>
+
+    <div class="cards">
+      <div class="card" data-id="deepseek" onclick="selectModel(this)">
+        <div class="card-icon"><svg width="28" height="28" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="11" fill="#4D6BFE"/><path d="M7.5 8.5C9 7 11 6.5 12.5 7c1.5.5 2.5 2 2 3.5s-2 2.5-3.5 3c-1.5.5-2 1.5-1.5 2.5s2 1.5 3.5 1c1.5-.5 3-1.5 4-3" stroke="#fff" stroke-width="1.8" stroke-linecap="round" fill="none"/></svg></div>
+        <div class="card-name">DeepSeek</div>
+        <div class="card-desc">国产旗舰<br>性价比高</div>
+        <div class="card-badge hot">推荐</div>
+      </div>
+      <div class="card" data-id="qwen" onclick="selectModel(this)">
+        <div class="card-icon"><svg width="28" height="28" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="11" fill="#615CED"/><path d="M8 12.5l2.5 2.5 5.5-6" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+        <div class="card-name">通义千问</div>
+        <div class="card-desc">阿里云<br>DashScope</div>
+        <div class="card-badge cn">国内</div>
+      </div>
+      <div class="card" data-id="glm" onclick="selectModel(this)">
+        <div class="card-icon"><svg width="28" height="28" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="11" fill="#3360FF"/><path d="M8 9h8M8 12h8M8 15h5" stroke="#fff" stroke-width="1.8" stroke-linecap="round"/></svg></div>
+        <div class="card-name">智谱 GLM</div>
+        <div class="card-desc">Z.AI<br>GLM-4</div>
+        <div class="card-badge cn">国内</div>
+      </div>
+      <div class="card" data-id="volcengine" onclick="selectModel(this)">
+        <div class="card-icon"><svg width="28" height="28" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="11" fill="#FF6A3D"/><path d="M8 16l4-10 4 10M9.5 13h5" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+        <div class="card-name">豆包</div>
+        <div class="card-desc">火山引擎<br>字节跳动</div>
+        <div class="card-badge cn">国内</div>
+      </div>
+      <div class="card" data-id="custom" onclick="selectModel(this)">
+        <div class="card-icon"><svg width="28" height="28" viewBox="0 0 24 24" fill="none"><path d="M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6z" stroke="#7a7a9a" stroke-width="1.8"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z" stroke="#7a7a9a" stroke-width="1.5"/></svg></div>
+        <div class="card-name">自定义接入</div>
+        <div class="card-desc">Claude / GPT 等<br>任意 OpenAI 兼容平台</div>
+      </div>
+    </div>
+
+    <!-- API Key input (shown after model selected) -->
+    <div class="input-section hidden" id="ai-input">
+      <div class="input-row">
+        <label id="api-key-label">API Key</label>
+        <div class="input-wrap">
+          <input type="password" id="api-key" placeholder="请输入 API Key">
+          <button class="toggle-vis" onclick="toggleVis('api-key')">👁</button>
+        </div>
+        <div class="input-hint" id="api-key-hint"></div>
+      </div>
+      <div class="input-row" id="base-url-row" style="display:none">
+        <label id="base-url-label">API 代理地址（可选，留空使用默认）</label>
+        <input class="full" type="text" id="base-url" placeholder="https://api.openai.com/v1">
+        <div class="input-hint" id="base-url-hint">用于中国大陆用户使用代理服务</div>
+      </div>
+      <div class="input-row" id="custom-model-row" style="display:none">
+        <label>模型 ID</label>
+        <input class="full" type="text" id="custom-model-id" placeholder="如 gpt-4o、doubao-seed-2-0-pro-260215" oninput="checkAiNext()">
+        <div class="input-hint">填写平台提供的模型标识符</div>
+      </div>
+    </div>
+
+    <div class="btn-row">
+      <button class="btn btn-secondary" onclick="goTo(0)">← 返回</button>
+      <button class="btn btn-primary" id="btn-ai-next" onclick="goTo(2)" disabled>下一步 →</button>
+    </div>
+  </div>
+
+  <!-- ── Screen 2: Chat Tool ── -->
+  <div class="screen" id="screen-2">
+    <div>
+      <div class="section-title">接入聊天工具</div>
+      <div class="section-sub">选择您想通过哪个平台与 AI 对话（可后续更改）</div>
+    </div>
+
+    <div class="cards chat-cards">
+      <div class="card" data-id="telegram" onclick="selectChat(this)">
+        <div class="card-icon">✈️</div>
+        <div class="card-name">Telegram</div>
+        <div class="card-desc">需要 Bot Token</div>
+        <div class="card-badge hot">推荐</div>
+      </div>
+
+      <div class="card" data-id="feishu" onclick="selectChat(this)">
+        <div class="card-icon">🪶</div>
+        <div class="card-name">飞书</div>
+        <div class="card-desc">需要 App ID<br>+ App Secret</div>
+        <div class="card-badge cn">国内</div>
+      </div>
+      <div class="card" data-id="weixin" onclick="selectChat(this)">
+        <div class="card-icon">💬</div>
+        <div class="card-name">微信</div>
+        <div class="card-desc">微信 ClawBot<br>插件接入</div>
+        <div class="card-badge cn">国内</div>
+      </div>
+      <div class="card" data-id="none" onclick="selectChat(this)">
+        <div class="card-icon">⏭️</div>
+        <div class="card-name">暂不接入</div>
+        <div class="card-desc">稍后通过启动<br>器配置</div>
+      </div>
+    </div>
+
+    <!-- Chat credentials (shown after platform selected) -->
+    <div class="input-section hidden" id="chat-input">
+      <!-- Telegram -->
+      <div id="chat-telegram">
+        <div class="input-row">
+          <label>Bot Token</label>
+          <div class="input-wrap">
+            <input type="password" id="tg-token" placeholder="1234567890:ABC...">
+            <button class="toggle-vis" onclick="toggleVis('tg-token')">👁</button>
+          </div>
+          <div class="input-hint">
+            在 Telegram 搜索 <a onclick="openUrl('https://t.me/BotFather')">@BotFather</a>，发送 /newbot 创建机器人获取 Token
+          </div>
+        </div>
+      </div>
+
+      <!-- WeChat -->
+      <div id="chat-weixin" class="hidden">
+        <div class="input-row">
+          <div style="background:#0e1a1e;border:1px solid #1a3535;border-radius:8px;padding:12px 14px;font-size:12px;color:#4ecdc4;line-height:1.8">
+            <div style="font-weight:600;margin-bottom:4px">💬 微信 ClawBot 接入说明</div>
+            <div style="color:#7a7a9a">
+              1. 完成初始配置后，启动器会自动启动 OpenClaw<br>
+              2. 在启动器中点击 <b style="color:#e8e0e0">「安装插件」</b>（需联网，约 1-3 分钟）<br>
+              3. 安装完成后点击 <b style="color:#e8e0e0">「扫码连接」</b>，用微信扫描二维码即可
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Feishu -->
+      <div id="chat-feishu" class="hidden">
+        <div class="input-row">
+          <label>App ID</label>
+          <input class="full" type="text" id="fs-appid" placeholder="cli_xxxxxxxx" oninput="checkChatNext()">
+        </div>
+        <div class="input-row" style="margin-top:8px">
+          <label>App Secret</label>
+          <div class="input-wrap">
+            <input type="password" id="fs-secret" placeholder="App Secret" oninput="checkChatNext()">
+            <button class="toggle-vis" onclick="toggleVis('fs-secret')">👁</button>
+          </div>
+          <div class="input-hint">在飞书开放平台创建企业自建应用后获取</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="btn-row">
+      <button class="btn btn-secondary" onclick="goTo(1)">← 返回</button>
+      <button class="btn btn-primary" id="btn-chat-next" onclick="goTo(3)" disabled>下一步 →</button>
+    </div>
+  </div>
+
+  <!-- ── Screen 3: Done ── -->
+  <div class="screen" id="screen-3">
+    <div>
+      <div class="section-title">配置确认</div>
+      <div class="section-sub">请确认以下配置，点击完成后将保存到本机</div>
+    </div>
+    <div class="summary" id="summary-box"></div>
+    <div class="btn-row">
+      <button class="btn btn-secondary" onclick="goTo(2)">← 返回</button>
+      <button class="btn btn-primary" id="btn-finish" onclick="finish()">
+        <span id="finish-spinner" class="spinner hidden"></span>
+        <span id="finish-text">🚀 保存并启动</span>
+      </button>
+    </div>
+  </div>
+
+</div><!-- .main -->
+
+<!-- USB removed overlay -->
+<div class="usb-warning" id="usb-warning">
+  <div style="font-size:48px">⚠️</div>
+  <h2>U 盘钥匙已移除</h2>
+  <p>检测到 U 盘被移除，OpenClaw 即将退出<br>请重新插入 U 盘钥匙后启动程序</p>
+</div>
+
+<script>
+const state = {
+  step: 0,
+  aiProvider: null,
+  apiKey: '',
+  baseUrl: '',
+  chatTool: null,
+  chatConfig: {}
+}
+
+const MODEL_LABELS = {
+  anthropic:   'Claude (Anthropic)',
+  openai:      'OpenAI GPT-4o',
+  deepseek:    'DeepSeek Chat',
+  qwen:        '通义千问 Max',
+  glm:         '智谱 GLM-4',
+  volcengine:  '豆包 (火山引擎)',
+  custom:      '自定义接入'
+}
+const CHAT_LABELS = {
+  telegram: 'Telegram',
+  weixin:   '微信 ClawBot',
+  feishu:   '飞书 (Feishu)',
+  none:     '暂不接入'
+}
+const API_KEY_HINTS = {
+  anthropic:   '在 <a onclick="openUrl(\'https://console.anthropic.com/\')">console.anthropic.com</a> 获取 API Key',
+  openai:      '在 <a onclick="openUrl(\'https://platform.openai.com/api-keys\')">platform.openai.com</a> 获取 API Key',
+  deepseek:    '在 <a onclick="openUrl(\'https://platform.deepseek.com/\')">platform.deepseek.com</a> 获取 API Key',
+  qwen:        '在 <a onclick="openUrl(\'https://dashscope.aliyun.com/\')">dashscope.aliyun.com</a> 获取 API Key',
+  glm:         '在 <a onclick="openUrl(\'https://open.bigmodel.cn/\')">open.bigmodel.cn</a> 获取 API Key',
+  volcengine:  '在 <a onclick="openUrl(\'https://console.volcengine.com/ark\')">火山引擎控制台</a> 获取 API Key',
+  custom:      '填写目标平台提供的 API Key'
+}
+
+// ── Navigation ──
+function goTo(step) {
+  const goingForward = step > state.step
+  if (goingForward && step === 2 && !validateAI()) return
+  if (goingForward && step === 3 && !validateChat()) return
+
+  state.step = step
+  document.querySelectorAll('.screen').forEach((s, i) => {
+    s.classList.toggle('active', i === step)
+  })
+  document.querySelectorAll('.snav-item').forEach((n, i) => {
+    n.classList.toggle('active', i === step)
+    n.classList.toggle('done', i < step)
+  })
+  document.querySelectorAll('.snav-line').forEach((l, i) => {
+    l.classList.toggle('done', i < step)
+  })
+  if (step === 3) buildSummary()
+}
+
+// ── Model selection ──
+function selectModel(card) {
+  document.querySelectorAll('.cards:not(.chat-cards) .card').forEach(c => c.classList.remove('selected'))
+  card.classList.add('selected')
+  state.aiProvider = card.dataset.id
+
+  const aiInput = document.getElementById('ai-input')
+  aiInput.classList.remove('hidden')
+
+  const KEY_LABELS = {
+    anthropic: 'Anthropic API Key', openai: 'OpenAI API Key',
+    deepseek: 'DeepSeek API Key', qwen: 'DashScope API Key',
+    glm: 'Z.AI API Key', volcengine: '火山方舟 API Key', custom: 'API Key'
+  }
+  document.getElementById('api-key-label').textContent = KEY_LABELS[state.aiProvider] || 'API Key'
+  document.getElementById('api-key-hint').innerHTML = API_KEY_HINTS[state.aiProvider] || ''
+
+  // baseUrl 行：openai/anthropic 可选，custom 必填，其他隐藏
+  const showBaseUrl = state.aiProvider === 'openai' || state.aiProvider === 'anthropic' || state.aiProvider === 'custom'
+  document.getElementById('base-url-row').style.display = showBaseUrl ? '' : 'none'
+  if (state.aiProvider === 'custom') {
+    document.getElementById('base-url-label').textContent = 'API Base URL（必填）'
+    document.getElementById('base-url').placeholder = 'https://your-api-provider.com/v1'
+    document.getElementById('base-url-hint').textContent = '填写 OpenAI 兼容的 API 地址'
+  } else {
+    document.getElementById('base-url-label').textContent = 'API 代理地址（可选，留空使用默认）'
+    document.getElementById('base-url').placeholder = 'https://api.openai.com/v1'
+    document.getElementById('base-url-hint').textContent = '用于中国大陆用户使用代理服务'
+  }
+
+  // 模型 ID 行：custom 和 volcengine 必填，其他隐藏
+  const modelRow = document.getElementById('custom-model-row')
+  const modelInput = document.getElementById('custom-model-id')
+  const modelHint = modelRow.querySelector('.input-hint')
+  if (state.aiProvider === 'volcengine') {
+    modelRow.style.display = ''
+    modelInput.placeholder = 'ep-xxxxxxxx（在火山引擎控制台创建的推理接入点 ID）'
+    modelInput.value = ''
+    modelHint.textContent = '必填：在火山引擎控制台 → 模型推理 → 创建接入点后获取'
+  } else if (state.aiProvider === 'custom') {
+    modelRow.style.display = ''
+    modelInput.placeholder = '如 gpt-4o、claude-sonnet-4-6'
+    modelInput.value = ''
+    modelHint.textContent = '填写平台提供的模型标识符'
+  } else {
+    modelRow.style.display = 'none'
+  }
+
+  checkAiNext()
+}
+
+document.getElementById('api-key').addEventListener('input', function() {
+  state.apiKey = this.value.trim()
+  checkAiNext()
+})
+document.getElementById('base-url').addEventListener('input', function() {
+  state.baseUrl = this.value.trim()
+  checkAiNext()
+})
+
+function checkAiNext() {
+  let ok = state.aiProvider && state.apiKey.length > 8
+  if (state.aiProvider === 'custom') {
+    ok = ok && state.baseUrl.length > 8 && document.getElementById('custom-model-id').value.trim().length > 0
+  }
+  if (state.aiProvider === 'volcengine') {
+    ok = ok && document.getElementById('custom-model-id').value.trim().length > 0
+  }
+  document.getElementById('btn-ai-next').disabled = !ok
+}
+
+function validateAI() {
+  if (!state.aiProvider) { alert('请选择 AI 模型'); return false }
+  if (!state.apiKey || state.apiKey.length < 8) { alert('请输入有效的 API Key'); return false }
+  return true
+}
+
+// ── Chat selection ──
+function selectChat(card) {
+  document.querySelectorAll('.chat-cards .card').forEach(c => c.classList.remove('selected'))
+  card.classList.add('selected')
+  state.chatTool = card.dataset.id
+
+  const chatInput = document.getElementById('chat-input')
+  chatInput.classList.remove('hidden')
+
+  ;['telegram','weixin','feishu'].forEach(id => {
+    document.getElementById('chat-' + id)?.classList.toggle('hidden', state.chatTool !== id)
+  })
+
+  if (state.chatTool === 'none') {
+    chatInput.classList.add('hidden')
+  }
+
+  checkChatNext()
+}
+
+;['tg-token','fs-appid','fs-secret'].forEach(id => {
+  document.getElementById(id)?.addEventListener('input', checkChatNext)
+})
+
+function checkChatNext() {
+  let ok = false
+  if (!state.chatTool) { ok = false }
+  else if (state.chatTool === 'none')    { ok = true }
+  else if (state.chatTool === 'weixin')  { ok = true }
+  else if (state.chatTool === 'telegram') { ok = document.getElementById('tg-token').value.trim().length > 10 }
+
+  else if (state.chatTool === 'feishu') {
+    ok = document.getElementById('fs-appid').value.trim().length > 3 &&
+         document.getElementById('fs-secret').value.trim().length > 3
+  }
+  document.getElementById('btn-chat-next').disabled = !ok
+}
+
+function validateChat() {
+  if (!state.chatTool) { alert('请选择聊天工具'); return false }
+  return true
+}
+
+function getChatConfig() {
+  switch (state.chatTool) {
+    case 'telegram': return { botToken: document.getElementById('tg-token').value.trim() }
+    case 'weixin':   return {}
+
+    case 'feishu': return {
+      appId:     document.getElementById('fs-appid').value.trim(),
+      appSecret: document.getElementById('fs-secret').value.trim(),
+    }
+    default: return {}
+  }
+}
+
+// ── Summary ──
+function buildSummary() {
+  const esc = s => s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+  const modelLabel = state.aiProvider === 'custom'
+    ? '自定义（' + document.getElementById('custom-model-id').value.trim() + '）'
+    : (MODEL_LABELS[state.aiProvider] || state.aiProvider)
+  const rows = [
+    ['AI 模型',  modelLabel],
+    ['聊天工具', CHAT_LABELS[state.chatTool]    || state.chatTool],
+    ['API Key',  state.apiKey.slice(0, 6) + '••••••••' + state.apiKey.slice(-4)],
+    ['数据存储', '本机 %LOCALAPPDATA%\\OpenClaw 目录'],
+    ['拔出保护', '检测到 U 盘钥匙移除立即终止运行'],
+  ]
+  if (state.baseUrl) rows.splice(2, 0, ['API 地址', state.baseUrl])
+
+  document.getElementById('summary-box').innerHTML = rows.map(([k, v]) => `
+    <div class="summary-row">
+      <span class="summary-key">${esc(k)}</span>
+      <span class="summary-val">${esc(v)}</span>
+    </div>
+  `).join('')
+}
+
+// ── Finish ──
+async function finish() {
+  document.getElementById('btn-finish').disabled = true
+  document.getElementById('finish-spinner').classList.remove('hidden')
+  document.getElementById('finish-text').textContent = '保存中...'
+
+  state.chatConfig = getChatConfig()
+
+  const setupData = {
+    aiProvider: state.aiProvider,
+    apiKey: state.apiKey,
+    baseUrl: state.baseUrl || '',
+    chatTool: state.chatTool,
+    chatConfig: state.chatConfig
+  }
+  if (state.aiProvider === 'custom' || state.aiProvider === 'volcengine') {
+    setupData.customModelId = document.getElementById('custom-model-id').value.trim()
+  }
+
+  // 验证 API Key 是否可用
+  document.getElementById('finish-text').textContent = '正在验证 API Key...'
+  try {
+    const v = await window.usb.validateApiKey(state.apiKey, state.aiProvider, state.baseUrl || '')
+    if (!v.ok) {
+      const goAhead = confirm(v.error + '\n\n是否仍然继续？（不推荐）')
+      if (!goAhead) {
+        document.getElementById('btn-finish').disabled = false
+        document.getElementById('finish-spinner').classList.add('hidden')
+        document.getElementById('finish-text').textContent = '🚀 保存并启动'
+        return
+      }
+    }
+  } catch (e) {
+    const goAhead = confirm('无法验证 API Key（' + (e.message || '网络异常') + '）\n\n是否仍然继续？')
+    if (!goAhead) {
+      document.getElementById('btn-finish').disabled = false
+      document.getElementById('finish-spinner').classList.add('hidden')
+      document.getElementById('finish-text').textContent = '🚀 保存并启动'
+      return
+    }
+  }
+  document.getElementById('finish-text').textContent = '保存中...'
+
+  const result = await window.usb.saveSetup(setupData)
+
+  if (!result.ok) {
+    alert('保存失败: ' + result.error)
+    document.getElementById('btn-finish').disabled = false
+    document.getElementById('finish-spinner').classList.add('hidden')
+    document.getElementById('finish-text').textContent = '🚀 保存并启动'
+    return
+  }
+
+  await window.usb.navigate('launcher')
+}
+
+// ── Helpers ──
+function toggleVis(id) {
+  const el = document.getElementById(id)
+  el.type = el.type === 'password' ? 'text' : 'password'
+}
+
+function onFsModeChange() {
+  // 旧版飞书手动配置的遗留函数，现已改为官方插件模式，保留空实现防止引用报错
+}
+
+function openUrl(url) {
+  window.usb.openExternal(url).catch(() => {})
+}
+
+// ── USB removed ──
+window.usb.onUsbRemoved(() => {
+  document.getElementById('usb-warning').classList.add('show')
+})
+</script>
+</body>
+</html>
