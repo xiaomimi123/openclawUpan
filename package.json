@@ -6,7 +6,7 @@
   "scripts": {
     "start": "electron .",
     "build": "electron-builder --win portable --x64",
-    "test": "node test/log-translate.test.js && node test/config.test.js"
+    "test": "node test/log-translate.test.js && node test/config.test.js && node test/api-client.test.js"
   },
   "dependencies": {
     "yauzl": "~2.10.0"
