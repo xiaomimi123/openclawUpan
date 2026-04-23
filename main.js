@@ -522,14 +522,15 @@ function createWindow() {
     return
   }
   mainWindow = new BrowserWindow({
-    width: 860,
-    height: 620,
-    minWidth: 760,
-    minHeight: 520,
+    width: 1180,
+    height: 740,
+    minWidth: 1080,
+    minHeight: 680,
     resizable: true,
     frame: false,
-    backgroundColor: '#0f0f23',
+    backgroundColor: '#08090D',
     show: false,
+    center: true,
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),
       contextIsolation: true,
@@ -538,10 +539,17 @@ function createWindow() {
     }
   })
 
-  const hasSetup = fs.existsSync(setupFile)
-  mainWindow.loadFile(hasSetup ? 'launcher.html' : 'setup.html')
+  mainWindow.loadFile('launcher.html')
   mainWindow.once('ready-to-show', () => mainWindow.show())
   mainWindow.on('closed', () => { mainWindow = null })
+}
+
+// 登出 / session 失效：关主窗，打开登录窗
+function transitionMainToLogin() {
+  createLoginWindow()
+  if (mainWindow && !mainWindow.isDestroyed()) {
+    mainWindow.close()
+  }
 }
 
 // ─── 单实例锁 ─────────────────────────────────────────────────────────────
@@ -1683,6 +1691,22 @@ ipcMain.on('login-win:close', (e) => {
 
 ipcMain.on('login-win:transition-to-main', () => {
   transitionLoginToMain()
+})
+
+// ─── IPC: 主窗口控制 ─────────────────────────────────────────────────────
+
+ipcMain.handle('main-win:logout', async () => {
+  try {
+    if (authManager) await authManager.logout()
+  } catch (e) {
+    console.error('[main-win:logout] authManager.logout failed:', e.message)
+  }
+  transitionMainToLogin()
+  return { ok: true }
+})
+
+ipcMain.on('main-win:transition-to-login', () => {
+  transitionMainToLogin()
 })
 
 // ─── IPC: Preflight check ─────────────────────────────────────────────────

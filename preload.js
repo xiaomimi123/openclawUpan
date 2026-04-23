@@ -71,7 +71,20 @@ contextBridge.exposeInMainWorld('auth', {
   getUser:     ()          => ipcRenderer.invoke('auth:get-user'),
   reload:      ()          => ipcRenderer.invoke('auth:reload'),
 
-  // token 彻底失效时触发（refresh 都失败），UI 应跳回登录页
+  // token 彻底失效时触发，UI 应跳回登录页
+  onAuthFailed: (cb) => {
+    ipcRenderer.removeAllListeners('auth:failed')
+    ipcRenderer.on('auth:failed', () => cb())
+  },
+})
+
+// ─── V5：主窗口生命周期控制 ────────────────────────────────────────────
+contextBridge.exposeInMainWorld('mainWin', {
+  // 退出登录：调后端 logout + 清 auth.json + 关主窗 + 开登录窗
+  logout:            () => ipcRenderer.invoke('main-win:logout'),
+  // 仅切换窗口，不调 auth 后端（用于 session 失效自救）
+  transitionToLogin: () => ipcRenderer.send('main-win:transition-to-login'),
+  // session 失效事件订阅
   onAuthFailed: (cb) => {
     ipcRenderer.removeAllListeners('auth:failed')
     ipcRenderer.on('auth:failed', () => cb())
