@@ -1,15 +1,12 @@
 /**
- * V5 登录态管理器
- * - 状态保存在 U 盘根目录 auth.json
- * - 登录/注册/登出/token 自动刷新
- * - 与 ApiClient 搭配：把 getAccessToken / refreshAccessToken / onAuthFailed 回调注入 ApiClient
+ * V5 登录态管理器（session cookie 模式）
+ * 对接灵镜AI / new-api 后端，登录返回 Set-Cookie: session=xxx 持久化到 U 盘 auth.json。
  *
- * auth.json 结构：
+ * auth.json 结构（version 2）：
  * {
- *   "version": 1,
- *   "access_token": "...",
- *   "refresh_token": "...",
- *   "user": { "email": "...", "nickname": "..." },
+ *   "version": 2,
+ *   "session": "session=<opaque cookie value>",
+ *   "user": { "id": 6, "username": "xxx", "display_name": "xxx", "email": "xxx", "quota": 0, ... },
  *   "saved_at": "2026-04-24T10:00:00.000Z"
  * }
  */
@@ -19,26 +16,30 @@ const path = require('path')
 const { ApiClient } = require('./api-client')
 const { ENDPOINTS } = require('./api-config')
 
-const AUTH_FILE_VERSION = 1
+const AUTH_FILE_VERSION = 2
 
 class AuthManager {
   /**
    * @param {object} opts
-   * @param {string} opts.authPath              U 盘 auth.json 绝对路径（必填，便于测试）
-   * @param {ApiClient} [opts.apiClient]        外部注入的 ApiClient；不传则自建并把回调接回本实例
-   * @param {() => void} [opts.onAuthFailed]    refresh 失败时回调（通知 UI 跳登录）
-   * @param {typeof fetch} [opts.fetchImpl]     自建 ApiClient 时透传给 fetchImpl
+   * @param {string}      opts.authPath           U 盘 auth.json 绝对路径（必填）
+   * @param {ApiClient}   [opts.apiClient]        外部注入；不传则自建并把 cookie 回调接回本实例
+   * @param {() => void}  [opts.onAuthFailed]     session 失效时回调
+   * @param {typeof fetch} [opts.fetchImpl]       自建 ApiClient 时透传
    */
   constructor({ authPath, apiClient = null, onAuthFailed = null, fetchImpl = null } = {}) {
     if (!authPath) throw new Error('AuthManager: authPath 必填')
     this.authPath = authPath
-    this.state = null  // { accessToken, refreshToken, user, savedAt }
+    this.state = null  // { session, user, savedAt }
     this._onAuthFailed = onAuthFailed || (() => {})
 
     this.apiClient = apiClient || new ApiClient({
-      getAccessToken: () => this.getAccessToken(),
-      refreshAccessToken: () => this.refreshAccessToken(),
-      onAuthFailed: () => this._onAuthFailed(),
+      getCookie: () => this.getCookieString(),
+      setCookie: (c) => this._updateSessionCookie(c),
+      onAuthFailed: () => {
+        // session 失效 → 清状态 + 回调
+        this.clear().catch(() => {})
+        this._onAuthFailed()
+      },
       fetchImpl,
     })
   }
@@ -51,10 +52,9 @@ class AuthManager {
       const raw = await fs.promises.readFile(this.authPath, 'utf8')
       const data = JSON.parse(raw)
       if (!data || data.version !== AUTH_FILE_VERSION) return false
-      if (!data.access_token || !data.refresh_token) return false
+      if (!data.session) return false
       this.state = {
-        accessToken: data.access_token,
-        refreshToken: data.refresh_token,
+        session: data.session,
         user: data.user || null,
         savedAt: data.saved_at || null,
       }
@@ -68,8 +68,7 @@ class AuthManager {
     if (!this.state) return
     const body = {
       version: AUTH_FILE_VERSION,
-      access_token: this.state.accessToken,
-      refresh_token: this.state.refreshToken,
+      session: this.state.session,
       user: this.state.user,
       saved_at: new Date().toISOString(),
     }
@@ -83,14 +82,23 @@ class AuthManager {
     try { await fs.promises.unlink(this.authPath) } catch {}
   }
 
+  // ─── 内部：ApiClient 调 setCookie 时转发到本实例 ──────────────────────────
+  _updateSessionCookie(cookieStr) {
+    if (!cookieStr) return
+    if (!this.state) this.state = { session: cookieStr, user: null, savedAt: null }
+    else this.state.session = cookieStr
+    // 异步保存，不阻塞
+    this.save().catch(() => {})
+  }
+
   // ─── 同步 getter ─────────────────────────────────────────────────────────
 
-  getAccessToken() {
-    return (this.state && this.state.accessToken) || null
+  getCookieString() {
+    return (this.state && this.state.session) || null
   }
 
   isLoggedIn() {
-    return !!(this.state && this.state.refreshToken)
+    return !!(this.state && this.state.session)
   }
 
   getUserProfile() {
@@ -99,40 +107,57 @@ class AuthManager {
 
   // ─── 认证动作 ────────────────────────────────────────────────────────────
 
+  /** 发邮箱验证码（GET ?email=xxx，60s 限频由后端控制） */
   async sendCode(email) {
-    await this.apiClient.post(ENDPOINTS.SEND_CODE, { email }, { auth: false })
+    await this.apiClient.get(ENDPOINTS.SEND_CODE, {
+      auth: false,
+      query: { email },
+    })
     return { ok: true }
   }
 
-  async register({ email, password, code }) {
+  /**
+   * 注册并自动登录
+   * @param {object} p
+   * @param {string} p.username
+   * @param {string} p.email
+   * @param {string} p.password
+   * @param {string} p.verification_code
+   */
+  async register({ username, email, password, verification_code }) {
+    if (!username || !email || !password || !verification_code) {
+      throw new Error('注册字段缺失')
+    }
     await this.apiClient.post(
       ENDPOINTS.REGISTER,
-      { email, password, code },
+      { username, email, password, password2: password, verification_code },
       { auth: false }
     )
-    // 注册接口只返回 { user_id, email }，不返回 token → 注册成功后自动登录
-    return await this.login({ email, password })
+    // 注册成功后自动登录
+    return await this.login({ username, password })
   }
 
-  async login({ email, password }) {
-    const r = await this.apiClient.post(
+  /**
+   * 登录
+   * @param {object} p
+   * @param {string} p.username 邮箱或用户名都可（后端 username 字段接受两种）
+   * @param {string} p.password
+   */
+  async login({ username, password }) {
+    const data = await this.apiClient.post(
       ENDPOINTS.LOGIN,
-      { email, password },
-      { auth: false }
+      { username, password },
+      { auth: false }  // 登录无 cookie，Set-Cookie 响应会被 ApiClient 自动捕获 → _updateSessionCookie
     )
-    if (!r || !r.access_token || !r.refresh_token) {
-      throw new Error('登录返回数据缺少 token 字段')
+    // 登录成功后 state.session 已由 _updateSessionCookie 写入
+    if (!this.state || !this.state.session) {
+      throw new Error('登录成功但未收到 session cookie')
     }
-    this.state = {
-      accessToken: r.access_token,
-      refreshToken: r.refresh_token,
-      user: { email },
-      savedAt: null,
-    }
+    this.state.user = data && typeof data === 'object' ? data : { username }
     await this.save()
-    // 登录成功后异步拉完整 profile（失败不影响登录成功）
+    // 拉完整 profile（包含 email 字段等；失败不影响登录成功）
     try {
-      const profile = await this.apiClient.get(ENDPOINTS.USER_PROFILE)
+      const profile = await this.apiClient.get(ENDPOINTS.USER_SELF)
       if (profile && typeof profile === 'object') {
         this.state.user = profile
         await this.save()
@@ -142,31 +167,12 @@ class AuthManager {
   }
 
   async logout() {
-    if (this.state && this.state.refreshToken) {
+    if (this.isLoggedIn()) {
       try {
-        await this.apiClient.post(ENDPOINTS.LOGOUT, {})
+        await this.apiClient.get(ENDPOINTS.LOGOUT)
       } catch {}
     }
     await this.clear()
-  }
-
-  async refreshAccessToken() {
-    if (!this.state || !this.state.refreshToken) return null
-    try {
-      const r = await this.apiClient.post(
-        ENDPOINTS.REFRESH,
-        { refresh_token: this.state.refreshToken },
-        { auth: false }
-      )
-      if (!r || !r.access_token) throw new Error('refresh 返回缺少 access_token')
-      this.state.accessToken = r.access_token
-      if (r.refresh_token) this.state.refreshToken = r.refresh_token
-      await this.save()
-      return this.state.accessToken
-    } catch {
-      await this.clear()
-      return null
-    }
   }
 }
 

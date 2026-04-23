@@ -1,33 +1,43 @@
 /**
- * V5 中转站 API 常量
- * 对接 https://aitoken.homes —— 业务接口走 /api/*，AI 代理走 /v1/*
+ * V5 中转站 API 常量（灵镜AI / new-api 后端）
+ * Base: https://aitoken.homes
+ *
+ * 鉴权机制：
+ *   - /api/user/*、/api/token/*、/api/lingjing/* 等业务路由 → Cookie session（登录返回 Set-Cookie）
+ *   - /v1/* AI 代理 + /v1/dashboard/* 余额 → Bearer sk-xxx（API Token，一个账号可创建多个）
+ *
+ * 响应格式统一：{ success: boolean, message: string, data: any }，HTTP 永远 200
  */
 
 const API_HOST = 'https://aitoken.homes'
-const AI_PROXY_PREFIX = '/v1'
 
 const ENDPOINTS = {
-  // 认证
-  SEND_CODE:        '/api/auth/send-code',
-  REGISTER:         '/api/auth/register',
-  LOGIN:            '/api/auth/login',
-  REFRESH:          '/api/auth/refresh',
-  LOGOUT:           '/api/auth/logout',
+  // ─── 用户认证（Cookie session） ─────────────────────────────────────────
+  SEND_CODE:    '/api/verification',      // GET ?email=xxx  （60s 限频）
+  REGISTER:     '/api/user/register',     // POST {username,email,password,password2,verification_code}
+  LOGIN:        '/api/user/login',        // POST {username,password} → Set-Cookie: session=xxx
+  LOGOUT:       '/api/user/logout',       // GET（带 cookie）
+  USER_SELF:    '/api/user/self',         // GET（带 cookie） → 用户 profile
 
-  // 用户 / 用量
-  USER_PROFILE:     '/api/user/profile',
-  USER_BALANCE:     '/api/user/balance',
-  BILLING_USAGE:    '/api/billing/usage',
+  // ─── API Token 管理（Cookie session） ──────────────────────────────────
+  TOKEN_LIST:   '/api/token/',                     // GET  列令牌
+  TOKEN_CREATE: '/api/token/',                     // POST 创建
+  TOKEN_DELETE: (id) => `/api/token/${id}`,        // DELETE
 
-  // 充值
-  TOPUP_PACKAGES:   '/api/topup/packages',
-  TOPUP_CREATE:     '/api/topup/create-order',
-  TOPUP_ORDER:      (orderId) => `/api/topup/order/${encodeURIComponent(orderId)}`,
+  // ─── 公开配置 ──────────────────────────────────────────────────────────
+  LINGJING_CONFIG:    '/api/lingjing/config',      // 站点配置（客服、邮箱验证开关等）
+  LINGJING_PLANS:     '/api/lingjing/plans',       // 套餐列表
+  LINGJING_MODEL_PRICES: '/api/lingjing/model-prices', // 模型广场价格
+  LINGJING_PAY_CONFIG: '/api/lingjing/pay/config', // 支付状态（alipay/wxpay 是否开通）
+  STATUS:             '/api/status',               // 健康检查
 
-  // 模型
-  MODELS_LIST:      '/api/models/list',
-  MODELS_KEY:       '/api/models/api-key',
-  MODELS_KEY_RESET: '/api/models/api-key/reset',
+  // ─── 余额 / 用量（Bearer sk-xxx） ──────────────────────────────────────
+  BILLING_SUB:   '/v1/dashboard/billing/subscription',
+  BILLING_USAGE: '/v1/dashboard/billing/usage',
+
+  // ─── AI 代理（Bearer sk-xxx） ──────────────────────────────────────────
+  V1_CHAT:       '/v1/chat/completions',
+  V1_MODELS:     '/v1/models',
 }
 
 const TIMEOUTS = {
@@ -36,16 +46,8 @@ const TIMEOUTS = {
   LONG:    30000,
 }
 
-// 充值订单轮询参数
-const TOPUP_POLL = {
-  INTERVAL_MS: 2000,
-  TIMEOUT_MS:  10 * 60 * 1000,
-}
-
 module.exports = {
   API_HOST,
-  AI_PROXY_PREFIX,
   ENDPOINTS,
   TIMEOUTS,
-  TOPUP_POLL,
 }

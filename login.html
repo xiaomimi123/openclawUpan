@@ -365,8 +365,8 @@ body {
 
     <form id="form-login" class="login-form active" novalidate>
       <div class="form-field">
-        <label class="form-label">邮箱</label>
-        <input type="email" class="form-input" name="email" placeholder="your@email.com" autocomplete="email" required>
+        <label class="form-label">邮箱或用户名</label>
+        <input type="text" class="form-input" name="username" placeholder="your@email.com 或 用户名" autocomplete="username" required>
       </div>
       <div class="form-field">
         <label class="form-label">密码</label>
@@ -502,15 +502,15 @@ btnSendCode.addEventListener('click', async () => {
 
 forms.login.addEventListener('submit', async (e) => {
   e.preventDefault()
-  const email = forms.login.email.value.trim()
+  const username = forms.login.username.value.trim()
   const password = forms.login.password.value
-  if (!isValidEmail(email)) return setInputError(forms.login.email, '邮箱格式不正确')
+  if (!username) return setInputError(forms.login.username, '请输入邮箱或用户名')
   if (!password) return setInputError(forms.login.password, '请输入密码')
 
   const btn = forms.login.querySelector('.btn-primary')
   setButtonLoading(btn, true)
   try {
-    const r = await window.auth.login({ email, password })
+    const r = await window.auth.login({ username, password })
     if (!r.ok) {
       showToast(r.error?.message || '登录失败', 'error')
       return
@@ -522,6 +522,14 @@ forms.login.addEventListener('submit', async (e) => {
   }
 })
 
+// 从 email 前缀派生用户名（字母/数字/下划线，3 位随机后缀避重）
+function deriveUsername(email) {
+  const local = (email.split('@')[0] || '').toLowerCase()
+  const clean = local.replace(/[^a-z0-9_]/g, '_').slice(0, 20) || 'user'
+  const suffix = Math.floor(Math.random() * 900 + 100)  // 100-999
+  return `${clean}_${suffix}`
+}
+
 forms.register.addEventListener('submit', async (e) => {
   e.preventDefault()
   const email = forms.register.email.value.trim()
@@ -531,10 +539,17 @@ forms.register.addEventListener('submit', async (e) => {
   if (!/^\d{4,8}$/.test(code)) return setInputError(forms.register.code, '验证码格式不正确')
   if (password.length < 6) return setInputError(forms.register.password, '密码至少 6 位')
 
+  const username = deriveUsername(email)
+
   const btn = forms.register.querySelector('.btn-primary')
   setButtonLoading(btn, true)
   try {
-    const r = await window.auth.register({ email, password, code })
+    const r = await window.auth.register({
+      username,
+      email,
+      password,
+      verification_code: code,
+    })
     if (!r.ok) {
       showToast(r.error?.message || '注册失败', 'error')
       return

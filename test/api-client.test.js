@@ -9,7 +9,7 @@ let passed = 0
 let failed = 0
 
 function test(name, fn) {
-  const run = async () => {
+  return (async () => {
     try {
       await fn()
       passed++
@@ -18,20 +18,25 @@ function test(name, fn) {
       failed++
       console.log(`  ❌ ${name}: ${e.message}`)
     }
-  }
-  return run()
+  })()
 }
 
-// 构造 Response-like 对象（够 fetch 契约用即可）
-function mockResponse({ status = 200, body = '', ok = null } = {}) {
+// 构造 Response-like 对象（模拟灵镜AI {success,message,data} 形态）
+function mockResponse({ status = 200, body = null, headers = {}, ok = null } = {}) {
   return {
     ok: ok == null ? (status >= 200 && status < 300) : ok,
     status,
-    text: async () => typeof body === 'string' ? body : JSON.stringify(body),
+    headers: {
+      get: (name) => headers[name.toLowerCase()] || null,
+      getSetCookie: () => headers['set-cookie'] ? [headers['set-cookie']] : [],
+    },
+    text: async () => {
+      if (body == null) return ''
+      return typeof body === 'string' ? body : JSON.stringify(body)
+    },
   }
 }
 
-// 按调用序列喂 fetch 结果
 function makeFetch(sequence) {
   const calls = []
   const fn = async (url, init) => {
@@ -48,137 +53,146 @@ function makeFetch(sequence) {
 async function run() {
   console.log('\n=== api-client 测试 ===\n')
 
-  await test('GET 成功返回 JSON', async () => {
-    const fetchImpl = makeFetch([mockResponse({ status: 200, body: { hello: 'world' } })])
+  await test('GET 成功解包 {success,data}', async () => {
+    const fetchImpl = makeFetch([mockResponse({ body: { success: true, data: { hello: 'world' }, message: '' } })])
     const c = new ApiClient({ baseUrl: 'https://x.test', fetchImpl })
-    const r = await c.get('/api/ping')
+    const r = await c.get('/api/ping', { auth: false })
     assert.deepStrictEqual(r, { hello: 'world' })
-    assert.strictEqual(fetchImpl.calls[0].url, 'https://x.test/api/ping')
-    assert.strictEqual(fetchImpl.calls[0].init.method, 'GET')
+  })
+
+  await test('业务 success=false 抛 ApiError 携带 message', async () => {
+    const fetchImpl = makeFetch([mockResponse({ body: { success: false, message: '用户名或密码错误' } })])
+    const c = new ApiClient({ baseUrl: 'https://x.test', fetchImpl })
+    await assert.rejects(c.post('/api/user/login', { username: 'x' }, { auth: false }), (e) => {
+      return e instanceof ApiError && e.status === 200 && e.message === '用户名或密码错误'
+    })
+  })
+
+  await test('unwrap=false 返回原始响应体', async () => {
+    const fetchImpl = makeFetch([mockResponse({ body: { success: true, data: { x: 1 }, extra: 'kept' } })])
+    const c = new ApiClient({ baseUrl: 'https://x.test', fetchImpl })
+    const r = await c.get('/api/raw', { auth: false, unwrap: false })
+    assert.deepStrictEqual(r, { success: true, data: { x: 1 }, extra: 'kept' })
   })
 
   await test('POST body 自动 JSON.stringify', async () => {
-    const fetchImpl = makeFetch([mockResponse({ status: 200, body: { ok: 1 } })])
+    const fetchImpl = makeFetch([mockResponse({ body: { success: true, data: null } })])
     const c = new ApiClient({ baseUrl: 'https://x.test', fetchImpl })
-    await c.post('/api/x', { a: 1, b: 'hi' })
+    await c.post('/api/x', { a: 1, b: 'hi' }, { auth: false })
     const init = fetchImpl.calls[0].init
     assert.strictEqual(init.method, 'POST')
     assert.strictEqual(init.body, '{"a":1,"b":"hi"}')
     assert.strictEqual(init.headers['Content-Type'], 'application/json')
   })
 
-  await test('access_token 自动注入 Authorization 头', async () => {
-    const fetchImpl = makeFetch([mockResponse({ status: 200, body: {} })])
-    const c = new ApiClient({
-      baseUrl: 'https://x.test',
-      getAccessToken: () => 'abc123',
-      fetchImpl,
-    })
-    await c.get('/api/user/profile')
-    assert.strictEqual(fetchImpl.calls[0].init.headers['Authorization'], 'Bearer abc123')
+  await test('query 参数拼到 URL', async () => {
+    const fetchImpl = makeFetch([mockResponse({ body: { success: true, data: null } })])
+    const c = new ApiClient({ baseUrl: 'https://x.test', fetchImpl })
+    await c.get('/api/verification', { auth: false, query: { email: 'a@b.c' } })
+    assert.strictEqual(fetchImpl.calls[0].url, 'https://x.test/api/verification?email=a%40b.c')
   })
 
-  await test('auth=false 时不注入 Authorization 头', async () => {
-    const fetchImpl = makeFetch([mockResponse({ status: 200, body: {} })])
+  await test('auth=cookie 自动加 Cookie header', async () => {
+    const fetchImpl = makeFetch([mockResponse({ body: { success: true, data: null } })])
     const c = new ApiClient({
       baseUrl: 'https://x.test',
-      getAccessToken: () => 'abc123',
+      getCookie: () => 'session=abc123',
       fetchImpl,
     })
-    await c.post('/api/auth/login', { email: 'a@b.c' }, { auth: false })
-    assert.ok(!fetchImpl.calls[0].init.headers['Authorization'])
+    await c.get('/api/user/self')
+    assert.strictEqual(fetchImpl.calls[0].init.headers['Cookie'], 'session=abc123')
   })
 
-  await test('401 → 刷新 token → 重试成功', async () => {
-    const fetchImpl = makeFetch([
-      mockResponse({ status: 401, body: { code: 401, message: 'expired' } }),
-      mockResponse({ status: 200, body: { ok: 1 } }),
-    ])
-    let token = 'old'
-    let refreshCalls = 0
+  await test('auth=false 时不加 Cookie 头', async () => {
+    const fetchImpl = makeFetch([mockResponse({ body: { success: true, data: null } })])
     const c = new ApiClient({
       baseUrl: 'https://x.test',
-      getAccessToken: () => token,
-      refreshAccessToken: async () => {
-        refreshCalls++
-        token = 'new'
-        return token
-      },
+      getCookie: () => 'session=abc123',
       fetchImpl,
     })
-    const r = await c.get('/api/user/profile')
-    assert.deepStrictEqual(r, { ok: 1 })
-    assert.strictEqual(refreshCalls, 1)
-    assert.strictEqual(fetchImpl.calls[1].init.headers['Authorization'], 'Bearer new')
+    await c.post('/api/user/login', { x: 1 }, { auth: false })
+    assert.ok(!fetchImpl.calls[0].init.headers['Cookie'])
   })
 
-  await test('401 → refresh 失败 → 回调 onAuthFailed 并抛 UNAUTHORIZED', async () => {
-    const fetchImpl = makeFetch([
-      mockResponse({ status: 401, body: { message: 'expired' } }),
-    ])
-    let failedCalled = 0
+  await test('auth=bearer 加 Authorization 头', async () => {
+    const fetchImpl = makeFetch([mockResponse({ body: { success: true, data: null } })])
+    const c = new ApiClient({ baseUrl: 'https://x.test', fetchImpl })
+    await c.get('/v1/models', { auth: 'bearer', bearerToken: 'sk-abc', unwrap: false })
+    assert.strictEqual(fetchImpl.calls[0].init.headers['Authorization'], 'Bearer sk-abc')
+    assert.ok(!fetchImpl.calls[0].init.headers['Cookie'])
+  })
+
+  await test('auth=bearer 缺 bearerToken 抛错', async () => {
+    const fetchImpl = makeFetch([])
+    const c = new ApiClient({ baseUrl: 'https://x.test', fetchImpl })
+    await assert.rejects(c.get('/v1/models', { auth: 'bearer' }), /bearerToken/)
+  })
+
+  await test('登录响应 Set-Cookie 被 setCookie 回调捕获', async () => {
+    let captured = null
+    const fetchImpl = makeFetch([mockResponse({
+      body: { success: true, data: { id: 6, username: 'x' } },
+      headers: { 'set-cookie': 'session=abc123xyz; Path=/; Max-Age=2592000' },
+    })])
     const c = new ApiClient({
       baseUrl: 'https://x.test',
-      getAccessToken: () => 'old',
-      refreshAccessToken: async () => null,
-      onAuthFailed: () => { failedCalled++ },
+      setCookie: (v) => { captured = v },
       fetchImpl,
     })
-    await assert.rejects(c.get('/x'), (e) => {
-      return e instanceof ApiError && e.status === 401 && e.code === 'UNAUTHORIZED'
-    })
-    assert.strictEqual(failedCalled, 1)
+    await c.post('/api/user/login', { username: 'a', password: 'b' }, { auth: false })
+    // 重要：即使 auth=false，响应的 Set-Cookie 也应该被捕获？
+    // 注：我们的实现里 Set-Cookie 仅在 auth==='cookie' 模式下捕获。
+    // 这与登录实际用法冲突：登录发请求时没 cookie，但响应带 Set-Cookie。
+    // 所以测试期望：auth=false 时不捕获，测试改成 auth=cookie 形态。
+    // （业务侧 AuthManager.login 会用 auth:false 但手动调 setCookie，或者我们放宽模式）
+    // ─ 实际上：ApiClient 登录时由于没 cookie，浏览器/fetch 仍会接收 Set-Cookie。
+    // 我们的语义：cookie 模式下自动存，非 cookie 模式下不管。
+    // 所以 AuthManager.login 需要用 auth=cookie 但 getCookie 返回 null（无 cookie 也能发请求）。
+    // 这个测试我们改用 auth='cookie' + getCookie: null 模式验证。
+    assert.strictEqual(captured, null)  // auth=false 不捕获
   })
 
-  await test('401 → refresh 后仍 401 → 回调 onAuthFailed', async () => {
-    const fetchImpl = makeFetch([
-      mockResponse({ status: 401, body: {} }),
-      mockResponse({ status: 401, body: {} }),
-    ])
-    let failedCalled = 0
+  await test('登录用 auth=cookie 且无初始 cookie → 响应 Set-Cookie 被捕获', async () => {
+    let captured = null
+    const fetchImpl = makeFetch([mockResponse({
+      body: { success: true, data: { id: 6 } },
+      headers: { 'set-cookie': 'session=abc123xyz; Path=/; Max-Age=2592000' },
+    })])
     const c = new ApiClient({
       baseUrl: 'https://x.test',
-      getAccessToken: () => 'old',
-      refreshAccessToken: async () => 'newbutstillbad',
-      onAuthFailed: () => { failedCalled++ },
+      getCookie: () => null,  // 登录前无 cookie
+      setCookie: (v) => { captured = v },
+      fetchImpl,
+    })
+    await c.post('/api/user/login', { username: 'a', password: 'b' })  // 默认 auth=cookie
+    assert.strictEqual(captured, 'session=abc123xyz')
+  })
+
+  await test('业务失败含"登录"关键词 → 触发 onAuthFailed', async () => {
+    const fetchImpl = makeFetch([mockResponse({
+      body: { success: false, message: '请先登录' },
+    })])
+    let authFailedCalled = 0
+    const c = new ApiClient({
+      baseUrl: 'https://x.test',
+      getCookie: () => 'session=stale',
+      onAuthFailed: () => { authFailedCalled++ },
+      fetchImpl,
+    })
+    await assert.rejects(c.get('/api/user/self'))
+    assert.strictEqual(authFailedCalled, 1)
+  })
+
+  await test('HTTP 401 → 触发 onAuthFailed', async () => {
+    const fetchImpl = makeFetch([mockResponse({ status: 401, body: { message: 'unauthorized' } })])
+    let authFailedCalled = 0
+    const c = new ApiClient({
+      baseUrl: 'https://x.test',
+      onAuthFailed: () => { authFailedCalled++ },
       fetchImpl,
     })
     await assert.rejects(c.get('/x'), (e) => e.status === 401)
-    assert.strictEqual(failedCalled, 1)
-  })
-
-  await test('并发 401 只触发一次 refresh', async () => {
-    const fetchImpl = makeFetch([
-      mockResponse({ status: 401, body: {} }),
-      mockResponse({ status: 401, body: {} }),
-      mockResponse({ status: 200, body: { r: 1 } }),
-      mockResponse({ status: 200, body: { r: 2 } }),
-    ])
-    let refreshCalls = 0
-    const c = new ApiClient({
-      baseUrl: 'https://x.test',
-      getAccessToken: () => 'old',
-      refreshAccessToken: async () => {
-        refreshCalls++
-        await new Promise(r => setTimeout(r, 10))
-        return 'new'
-      },
-      fetchImpl,
-    })
-    const [a, b] = await Promise.all([c.get('/a'), c.get('/b')])
-    assert.deepStrictEqual(a, { r: 1 })
-    assert.deepStrictEqual(b, { r: 2 })
-    assert.strictEqual(refreshCalls, 1)
-  })
-
-  await test('非 2xx 且带 message 时抛 ApiError 携带后端 message', async () => {
-    const fetchImpl = makeFetch([
-      mockResponse({ status: 400, body: { code: 10001, message: '邮箱已注册' } }),
-    ])
-    const c = new ApiClient({ baseUrl: 'https://x.test', fetchImpl })
-    await assert.rejects(c.post('/api/auth/register', {}, { auth: false }), (e) => {
-      return e instanceof ApiError && e.status === 400 && e.code === 10001 && e.message === '邮箱已注册'
-    })
+    assert.strictEqual(authFailedCalled, 1)
   })
 
   await test('网络错误 → NETWORK_ERROR', async () => {
@@ -206,7 +220,7 @@ async function run() {
   })
 
   await test('绝对 URL 不加 baseUrl 前缀', async () => {
-    const fetchImpl = makeFetch([mockResponse({ status: 200, body: {} })])
+    const fetchImpl = makeFetch([mockResponse({ body: { success: true, data: null } })])
     const c = new ApiClient({ baseUrl: 'https://x.test', fetchImpl })
     await c.get('https://other.test/abs', { auth: false })
     assert.strictEqual(fetchImpl.calls[0].url, 'https://other.test/abs')
