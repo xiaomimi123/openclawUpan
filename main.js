@@ -1715,6 +1715,71 @@ ipcMain.on('main-win:transition-to-login', () => {
   transitionMainToLogin()
 })
 
+// ─── IPC: V5 Token 管理 + 模型目录 ───────────────────────────────────────
+// 默认 token 配置：永不过期 + 不限额 + 全模型
+const DEFAULT_TOKEN_NAME = 'launcher-default'
+function defaultTokenPayload(name = DEFAULT_TOKEN_NAME) {
+  return {
+    name,
+    expired_time: -1,
+    remain_quota: 0,
+    unlimited_quota: true,
+    models: null,
+  }
+}
+
+// 拉已有 token；为空时自动创建一个 launcher-default；返回首个 token 的完整记录
+ipcMain.handle('token:list-or-create', async () => {
+  if (!authManager || !authManager.isLoggedIn()) {
+    return { ok: false, error: { message: 'Not logged in' } }
+  }
+  try {
+    const list = await authManager.apiClient.get('/api/token/')
+    if (Array.isArray(list) && list.length > 0) {
+      return { ok: true, data: list[0] }
+    }
+    // 空列表 → 创建一个
+    const created = await authManager.apiClient.post('/api/token/', defaultTokenPayload())
+    return { ok: true, data: created }
+  } catch (e) {
+    return { ok: false, error: { message: e.message, status: e.status || 0, code: e.code || null } }
+  }
+})
+
+// 重置 token：删旧 + 建新
+ipcMain.handle('token:reset', async () => {
+  if (!authManager || !authManager.isLoggedIn()) {
+    return { ok: false, error: { message: 'Not logged in' } }
+  }
+  try {
+    const list = await authManager.apiClient.get('/api/token/')
+    if (Array.isArray(list)) {
+      for (const t of list) {
+        try { await authManager.apiClient.del(`/api/token/${t.id}`) } catch {}
+      }
+    }
+    const created = await authManager.apiClient.post('/api/token/', defaultTokenPayload())
+    return { ok: true, data: created }
+  } catch (e) {
+    return { ok: false, error: { message: e.message, status: e.status || 0, code: e.code || null } }
+  }
+})
+
+// 拉官方已上架的模型目录（公开接口，无需 cookie）
+ipcMain.handle('models:list-official', async () => {
+  if (!authManager) {
+    return { ok: false, error: { message: 'AuthManager not initialized' } }
+  }
+  try {
+    const list = await authManager.apiClient.get('/api/lingjing/model-prices', { auth: false })
+    const visible = Array.isArray(list) ? list.filter(m => m.is_visible !== false) : []
+    visible.sort((a, b) => (a.sort_order || 0) - (b.sort_order || 0))
+    return { ok: true, data: visible }
+  } catch (e) {
+    return { ok: false, error: { message: e.message, status: e.status || 0, code: e.code || null } }
+  }
+})
+
 // ─── IPC: Preflight check ─────────────────────────────────────────────────
 
 function checkPortFreeOn(port, host) {

@@ -90,3 +90,13 @@ contextBridge.exposeInMainWorld('mainWin', {
     ipcRenderer.on('auth:failed', () => cb())
   },
 })
+
+// ─── V5：模型配置（官方 token 管理 + 上架模型目录）─────────────────────
+contextBridge.exposeInMainWorld('models', {
+  // 拉已有 token，为空时自动创建一个
+  listOrCreateToken: () => ipcRenderer.invoke('token:list-or-create'),
+  // 重置 token（删旧 + 建新）
+  resetToken:        () => ipcRenderer.invoke('token:reset'),
+  // 官方上架的模型目录（公开接口）
+  listOfficial:      () => ipcRenderer.invoke('models:list-official'),
+})
