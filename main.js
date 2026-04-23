@@ -18,6 +18,7 @@ const {
 
 const { translateLog } = require('./src/log-translate')
 const { syncFromUsb, syncToUsb } = require('./src/usb-sync')
+const { AuthManager } = require('./src/auth')
 
 const APP_VERSION = require('./package.json').version
 
@@ -51,7 +52,17 @@ let currentGatewayToken = null
 let startingOpenclaw = false
 let pluginRetryPhase = 0        // 0=正常, 1=已同步注册重试, 2=已逐个隔离, 3=已全部禁用
 
+// V5 登录态管理器（app.whenReady 后初始化）
+let authManager = null
+
 const sendLog = (msg) => mainWindow?.webContents.send('openclaw-log', msg)
+
+// 向所有窗口广播 auth 事件（登录失效等）
+function broadcastAuthEvent(channel) {
+  for (const w of BrowserWindow.getAllWindows()) {
+    try { w.webContents.send(channel) } catch {}
+  }
+}
 
 // ─── 插件注册 ────────────────────────────────────────────────────────────
 // openclaw 的插件系统依赖 openclaw.json 中三个字段协同工作：
@@ -494,6 +505,12 @@ if (!gotLock) {
 
   app.whenReady().then(async () => {
     ensureOpenclawShim()
+    // V5：AuthManager 单例，持久化到 U 盘 auth.json
+    authManager = new AuthManager({
+      authPath: path.join(usbRoot, 'auth.json'),
+      onAuthFailed: () => broadcastAuthEvent('auth:failed'),
+    })
+    await authManager.load()
     createWindow()
     startUsbMonitor()
   })
@@ -1537,6 +1554,60 @@ ipcMain.handle('install-feishu-plugin', async () => {
 // ─── IPC: Version ─────────────────────────────────────────────────────────
 
 ipcMain.handle('get-version', () => app.getVersion())
+
+// ─── IPC: Auth (V5) ───────────────────────────────────────────────────────
+// 统一错误封装：renderer 拿到 { ok: true, data } 或 { ok: false, error: {status,code,message} }
+function wrapAuth(fn) {
+  return async (...args) => {
+    try {
+      const data = await fn(...args)
+      return { ok: true, data }
+    } catch (e) {
+      return {
+        ok: false,
+        error: {
+          status: e && e.status != null ? e.status : 0,
+          code: e && e.code != null ? e.code : null,
+          message: (e && e.message) || '未知错误',
+        },
+      }
+    }
+  }
+}
+
+ipcMain.handle('auth:send-code', wrapAuth(async (_e, email) => {
+  if (!authManager) throw new Error('AuthManager 未初始化')
+  return await authManager.sendCode(email)
+}))
+
+ipcMain.handle('auth:register', wrapAuth(async (_e, payload) => {
+  if (!authManager) throw new Error('AuthManager 未初始化')
+  return await authManager.register(payload)
+}))
+
+ipcMain.handle('auth:login', wrapAuth(async (_e, payload) => {
+  if (!authManager) throw new Error('AuthManager 未初始化')
+  return await authManager.login(payload)
+}))
+
+ipcMain.handle('auth:logout', wrapAuth(async () => {
+  if (!authManager) throw new Error('AuthManager 未初始化')
+  await authManager.logout()
+  return { ok: true }
+}))
+
+ipcMain.handle('auth:is-logged-in', wrapAuth(async () => {
+  return authManager ? authManager.isLoggedIn() : false
+}))
+
+ipcMain.handle('auth:get-user', wrapAuth(async () => {
+  return authManager ? authManager.getUserProfile() : null
+}))
+
+ipcMain.handle('auth:reload', wrapAuth(async () => {
+  if (!authManager) throw new Error('AuthManager 未初始化')
+  return await authManager.load()
+}))
 
 // ─── IPC: Preflight check ─────────────────────────────────────────────────
 

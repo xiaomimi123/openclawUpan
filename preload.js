@@ -60,3 +60,20 @@ contextBridge.exposeInMainWorld('usb', {
     ipcRenderer.on('openclaw-auto-restart', () => cb())
   }
 })
+
+// ─── V5：登录/注册/token 管理（独立命名空间 window.auth）─────────────────
+contextBridge.exposeInMainWorld('auth', {
+  sendCode:    (email)     => ipcRenderer.invoke('auth:send-code', email),
+  register:    (payload)   => ipcRenderer.invoke('auth:register', payload),
+  login:       (payload)   => ipcRenderer.invoke('auth:login', payload),
+  logout:      ()          => ipcRenderer.invoke('auth:logout'),
+  isLoggedIn:  ()          => ipcRenderer.invoke('auth:is-logged-in'),
+  getUser:     ()          => ipcRenderer.invoke('auth:get-user'),
+  reload:      ()          => ipcRenderer.invoke('auth:reload'),
+
+  // token 彻底失效时触发（refresh 都失败），UI 应跳回登录页
+  onAuthFailed: (cb) => {
+    ipcRenderer.removeAllListeners('auth:failed')
+    ipcRenderer.on('auth:failed', () => cb())
+  },
+})
