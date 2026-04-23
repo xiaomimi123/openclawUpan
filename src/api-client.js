@@ -16,6 +16,15 @@
 
 const { API_HOST, TIMEOUTS } = require('./api-config')
 
+// 选择 fetch 实现：优先 undici（Node 22 内置，保证 Set-Cookie 可见），回退 global.fetch
+function pickFetch() {
+  try {
+    const { fetch: undiciFetch } = require('undici')
+    if (typeof undiciFetch === 'function') return undiciFetch
+  } catch {}
+  return (...a) => global.fetch(...a)
+}
+
 class ApiError extends Error {
   constructor({ status = 0, code = null, message = '请求失败' } = {}) {
     super(message)
@@ -45,7 +54,9 @@ class ApiClient {
     this.getCookie = getCookie
     this.setCookie = setCookie
     this.onAuthFailed = onAuthFailed
-    this._fetch = fetchImpl || ((...a) => global.fetch(...a))
+    // Electron main 的 global.fetch 在某些版本会走 Chromium 栈，导致 Set-Cookie 对 JS 不可见
+    // 优先用 undici（Node 22 内置）绕过
+    this._fetch = fetchImpl || pickFetch()
   }
 
   /**
@@ -167,19 +178,38 @@ class ApiClient {
 // Response.headers.get('set-cookie') 在 Node fetch 里只会返回第一条（合并的）；
 // 多个 Set-Cookie 需要 .getSetCookie() 或 raw headers。我们只关心 session=xxx，用字符串匹配足够。
 
+const DEBUG_COOKIE = process.env.OPENCLAW_DEBUG_COOKIE === '1'
+
 function pickSetCookie(headers) {
-  if (!headers) return null
-  // Node 20+: headers.getSetCookie()
+  if (!headers) {
+    if (DEBUG_COOKIE) console.log('[cookie-debug] headers is null/undefined')
+    return null
+  }
+  // Node 20+: headers.getSetCookie() 返回数组
   if (typeof headers.getSetCookie === 'function') {
     const arr = headers.getSetCookie()
-    return arr && arr.length ? arr.join(',') : null
+    if (DEBUG_COOKIE) console.log('[cookie-debug] getSetCookie():', JSON.stringify(arr))
+    if (arr && arr.length) return arr.join('\n')  // 用换行隔开避免被 Expires 里的逗号搞乱
   }
-  // 回退：get('set-cookie')（可能只拿到合并字符串）
+  // entries() 遍历（兼容 Chromium fetch 的 Headers）
+  if (typeof headers.entries === 'function') {
+    const pieces = []
+    for (const [k, v] of headers.entries()) {
+      if (k.toLowerCase() === 'set-cookie') pieces.push(v)
+    }
+    if (DEBUG_COOKIE) console.log('[cookie-debug] entries set-cookie pieces:', pieces)
+    if (pieces.length) return pieces.join('\n')
+  }
+  // get('set-cookie') 回退
   if (typeof headers.get === 'function') {
-    return headers.get('set-cookie')
+    const v = headers.get('set-cookie')
+    if (DEBUG_COOKIE) console.log('[cookie-debug] get(set-cookie):', v)
+    if (v) return v
   }
-  // mock header 对象（测试用）：直接读属性
-  return headers['set-cookie'] || null
+  // 最终回退：直接读属性（mock/特殊对象）
+  const raw = headers['set-cookie'] || null
+  if (DEBUG_COOKIE) console.log('[cookie-debug] raw[set-cookie]:', raw)
+  return raw
 }
 
 function extractSessionCookie(setCookieStr) {
