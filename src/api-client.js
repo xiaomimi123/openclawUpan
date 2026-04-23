@@ -15,14 +15,79 @@
  */
 
 const { API_HOST, TIMEOUTS } = require('./api-config')
+const https = require('node:https')
+const http = require('node:http')
+const { URL } = require('node:url')
 
-// 选择 fetch 实现：优先 undici（Node 22 内置，保证 Set-Cookie 可见），回退 global.fetch
-function pickFetch() {
-  try {
-    const { fetch: undiciFetch } = require('undici')
-    if (typeof undiciFetch === 'function') return undiciFetch
-  } catch {}
-  return (...a) => global.fetch(...a)
+/**
+ * 原生 Node https.request 封装成 fetch 风格
+ * 目的：彻底绕过 Electron main 的 Chromium fetch（会过滤 Set-Cookie）
+ * 返回的 Response-like 对象兼容 fetch 契约：{ ok, status, headers, text() }
+ */
+function nodeHttpsFetch(url, init = {}) {
+  return new Promise((resolve, reject) => {
+    const u = new URL(url)
+    const mod = u.protocol === 'https:' ? https : http
+    const method = (init.method || 'GET').toUpperCase()
+    const headers = { ...(init.headers || {}) }
+    const bodyStr = init.body
+    if (bodyStr != null && !headers['Content-Length']) {
+      headers['Content-Length'] = Buffer.byteLength(bodyStr)
+    }
+    const req = mod.request({
+      hostname: u.hostname,
+      port: u.port || (u.protocol === 'https:' ? 443 : 80),
+      path: u.pathname + u.search,
+      method,
+      headers,
+    }, (res) => {
+      const chunks = []
+      res.on('data', (c) => chunks.push(c))
+      res.on('end', () => {
+        const body = Buffer.concat(chunks).toString('utf8')
+        resolve({
+          ok: res.statusCode >= 200 && res.statusCode < 300,
+          status: res.statusCode,
+          statusText: res.statusMessage || '',
+          headers: {
+            get: (k) => {
+              const v = res.headers[k.toLowerCase()]
+              if (Array.isArray(v)) return v.join(', ')
+              return v == null ? null : String(v)
+            },
+            getSetCookie: () => {
+              const sc = res.headers['set-cookie']
+              return Array.isArray(sc) ? sc : (sc ? [String(sc)] : [])
+            },
+            entries: function* () {
+              for (const [k, v] of Object.entries(res.headers)) {
+                if (Array.isArray(v)) for (const vv of v) yield [k, String(vv)]
+                else yield [k, String(v)]
+              }
+            },
+          },
+          text: async () => body,
+        })
+      })
+      res.on('error', reject)
+    })
+    req.on('error', reject)
+    if (init.signal) {
+      if (init.signal.aborted) {
+        req.destroy(new AbortError())
+        return
+      }
+      init.signal.addEventListener('abort', () => {
+        req.destroy(new AbortError())
+      })
+    }
+    if (bodyStr != null) req.write(bodyStr)
+    req.end()
+  })
+}
+
+class AbortError extends Error {
+  constructor() { super('aborted'); this.name = 'AbortError' }
 }
 
 class ApiError extends Error {
@@ -54,9 +119,9 @@ class ApiClient {
     this.getCookie = getCookie
     this.setCookie = setCookie
     this.onAuthFailed = onAuthFailed
-    // Electron main 的 global.fetch 在某些版本会走 Chromium 栈，导致 Set-Cookie 对 JS 不可见
-    // 优先用 undici（Node 22 内置）绕过
-    this._fetch = fetchImpl || pickFetch()
+    // Electron main 的 global.fetch 走 Chromium 栈会过滤 Set-Cookie
+    // → 默认改用 Node 原生 https.request，Set-Cookie 完整可见
+    this._fetch = fetchImpl || nodeHttpsFetch
   }
 
   /**

@@ -67,6 +67,16 @@ function broadcastAuthEvent(channel) {
   }
 }
 
+// 往登录窗推送一条诊断日志（entry = { level, message }）
+function pushLoginDebug(level, message) {
+  if (loginWindow && !loginWindow.isDestroyed()) {
+    try { loginWindow.webContents.send('login-win:debug-log', { level, message }) } catch {}
+  }
+  // 同时 console 输出，便于终端看
+  if (level === 'error') console.error('[login]', message)
+  else console.log('[login]', message)
+}
+
 // ─── 插件注册 ────────────────────────────────────────────────────────────
 // openclaw 的插件系统依赖 openclaw.json 中三个字段协同工作：
 //   plugins.allow   — 白名单，allow 不为空时不在其中的插件会被拒绝加载
@@ -1607,54 +1617,54 @@ ipcMain.handle('get-version', () => app.getVersion())
 
 // ─── IPC: Auth (V5) ───────────────────────────────────────────────────────
 // 统一错误封装：renderer 拿到 { ok: true, data } 或 { ok: false, error: {status,code,message} }
-function wrapAuth(fn) {
+function wrapAuth(label, fn) {
   return async (...args) => {
     try {
       const data = await fn(...args)
+      pushLoginDebug('info', `${label} OK`)
       return { ok: true, data }
     } catch (e) {
-      return {
-        ok: false,
-        error: {
-          status: e && e.status != null ? e.status : 0,
-          code: e && e.code != null ? e.code : null,
-          message: (e && e.message) || '未知错误',
-        },
+      const err = {
+        status: e && e.status != null ? e.status : 0,
+        code: e && e.code != null ? e.code : null,
+        message: (e && e.message) || '未知错误',
       }
+      pushLoginDebug('error', `${label} FAIL: ${err.message} (status=${err.status}, code=${err.code})`)
+      return { ok: false, error: err }
     }
   }
 }
 
-ipcMain.handle('auth:send-code', wrapAuth(async (_e, email) => {
+ipcMain.handle('auth:send-code', wrapAuth('send-code', async (_e, email) => {
   if (!authManager) throw new Error('AuthManager 未初始化')
   return await authManager.sendCode(email)
 }))
 
-ipcMain.handle('auth:register', wrapAuth(async (_e, payload) => {
+ipcMain.handle('auth:register', wrapAuth('register', async (_e, payload) => {
   if (!authManager) throw new Error('AuthManager 未初始化')
   return await authManager.register(payload)
 }))
 
-ipcMain.handle('auth:login', wrapAuth(async (_e, payload) => {
+ipcMain.handle('auth:login', wrapAuth('login', async (_e, payload) => {
   if (!authManager) throw new Error('AuthManager 未初始化')
   return await authManager.login(payload)
 }))
 
-ipcMain.handle('auth:logout', wrapAuth(async () => {
+ipcMain.handle('auth:logout', wrapAuth('logout', async () => {
   if (!authManager) throw new Error('AuthManager 未初始化')
   await authManager.logout()
   return { ok: true }
 }))
 
-ipcMain.handle('auth:is-logged-in', wrapAuth(async () => {
+ipcMain.handle('auth:is-logged-in', wrapAuth('is-logged-in', async () => {
   return authManager ? authManager.isLoggedIn() : false
 }))
 
-ipcMain.handle('auth:get-user', wrapAuth(async () => {
+ipcMain.handle('auth:get-user', wrapAuth('get-user', async () => {
   return authManager ? authManager.getUserProfile() : null
 }))
 
-ipcMain.handle('auth:reload', wrapAuth(async () => {
+ipcMain.handle('auth:reload', wrapAuth('reload', async () => {
   if (!authManager) throw new Error('AuthManager 未初始化')
   return await authManager.load()
 }))

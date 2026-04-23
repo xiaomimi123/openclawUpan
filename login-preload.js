@@ -16,4 +16,10 @@ contextBridge.exposeInMainWorld('loginWin', {
   close:            () => ipcRenderer.send('login-win:close'),
   transitionToMain: () => ipcRenderer.send('login-win:transition-to-main'),
   openExternal:     (url) => ipcRenderer.invoke('open-external', url),
+
+  // main 进程推送的诊断日志（{ level: 'info'|'error', message: string }）
+  onDebugLog: (cb) => {
+    ipcRenderer.removeAllListeners('login-win:debug-log')
+    ipcRenderer.on('login-win:debug-log', (_e, entry) => cb(entry))
+  },
 })
