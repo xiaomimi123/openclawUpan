@@ -166,6 +166,20 @@ class AuthManager {
     return { user: this.state.user }
   }
 
+  /** 强制从后端拉最新 /api/user/self 更新状态（余额等会变化） */
+  async refreshUserProfile() {
+    if (!this.isLoggedIn()) return null
+    try {
+      const profile = await this.apiClient.get(ENDPOINTS.USER_SELF)
+      if (profile && typeof profile === 'object') {
+        this.state.user = profile
+        await this.save()
+        return profile
+      }
+    } catch {}
+    return this.getUserProfile()
+  }
+
   async logout() {
     if (this.isLoggedIn()) {
       try {

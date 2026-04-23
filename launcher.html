@@ -1486,10 +1486,13 @@ body {
 
         <div class="checkout-row">
           <div class="checkout-total">
-            <div class="k">TOTAL</div>
+            <div class="k">SELECTED</div>
             <div class="v"><span class="currency">¥</span><span id="checkout-amount">0</span></div>
           </div>
-          <button class="btn-big" id="btn-pay" disabled>立即支付 →</button>
+          <button class="btn-big" id="btn-pay" disabled>前往官网充值 →</button>
+        </div>
+        <div style="font-size:11px;color:var(--text-muted);margin-top:8px;line-height:1.6">
+          💡 点击后将在浏览器打开灵境官网充值页完成支付。支付成功后，启动器会自动刷新余额。
         </div>
 
         <div class="redeem-card">
@@ -1576,22 +1579,6 @@ body {
 </div>
 
 <div id="toast"></div>
-
-<!-- 支付轮询 Modal -->
-<div class="pay-modal-bg" id="pay-modal-bg">
-  <div class="pay-modal">
-    <h3 id="pay-modal-title">订单已创建</h3>
-    <div class="msg" id="pay-modal-msg">
-      浏览器已打开支付宝二维码页，请用手机支付宝扫码完成支付。<br>
-      启动器会每 2 秒检查一次订单状态。
-    </div>
-    <div class="countdown" id="pay-modal-countdown">剩余 10:00</div>
-    <div class="row">
-      <button class="btn-sm" id="btn-pay-reopen">重新打开页面</button>
-      <button class="btn-sm" id="btn-pay-cancel">取消</button>
-    </div>
-  </div>
-</div>
 
 <script>
 // ─── Toast ──────────────────────────────────────────────────────────
@@ -2151,35 +2138,49 @@ const topupPage = {
   selectedPlanId: null,
   selectedPayType: 'alipay',
   loaded: false,
-  currentOrder: null,  // { order_no, pay_url, amount }
-  pollTimer: null,
-  countdownTimer: null,
-  countdownSec: 0,
 }
 
 function rmbFromQuota(q) {
   return (Number(q || 0) / QUOTA_PER_RMB).toFixed(2)
 }
 
-async function refreshBalance() {
+let _lastQuota = null  // 记录上次余额，用于检测"到账"
+async function refreshBalance({ silent = true } = {}) {
   try {
-    const r = await window.auth.getUser()
-    if (r && r.ok && r.data) {
-      const user = r.data
-      const balance = rmbFromQuota(user.quota)
-      const used = rmbFromQuota(user.used_quota)
-      // 顶栏余额
-      document.getElementById('balance-amount').innerHTML = `<span class="currency">¥</span>${balance}`
-      // 首页 quota 卡片
-      document.getElementById('card-quota').textContent = `¥${balance}`
-      // 充值页 hero
-      document.getElementById('topup-balance-amount').textContent = balance
-      document.getElementById('topup-used').textContent = `¥${used}`
-      // 粗略估算调用次数（按每次 1500 token、deepseek ¥1/M 计算）
-      const callEst = Math.floor(Number(user.quota || 0) / 1500)
-      document.getElementById('topup-can-call').textContent = `约 ${callEst.toLocaleString()} 次`
+    // 强制从后端拉最新 /api/user/self，避免用到 auth.json 里的陈旧 quota
+    const r = await window.auth.refreshUser()
+    console.log('[balance] refreshUser ->', r)
+    if (!r || !r.ok || !r.data) {
+      if (!silent) showToast('获取余额失败: ' + (r?.error?.message || '未登录'), 'error')
+      return
     }
-  } catch {}
+    const user = r.data
+    const balance = rmbFromQuota(user.quota)
+    const used = rmbFromQuota(user.used_quota)
+    // 顶栏余额
+    const el = document.getElementById('balance-amount')
+    if (el) el.innerHTML = `<span class="currency">¥</span>${balance}`
+    // 首页 quota 卡片
+    const cardEl = document.getElementById('card-quota')
+    if (cardEl) cardEl.textContent = `¥${balance}`
+    // 充值页 hero
+    const topupBalEl = document.getElementById('topup-balance-amount')
+    if (topupBalEl) topupBalEl.textContent = balance
+    const topupUsedEl = document.getElementById('topup-used')
+    if (topupUsedEl) topupUsedEl.textContent = `¥${used}`
+    const callEst = Math.floor(Number(user.quota || 0) / 1500)
+    const callEl = document.getElementById('topup-can-call')
+    if (callEl) callEl.textContent = `约 ${callEst.toLocaleString()} 次`
+
+    // 到账检测：余额增加 → toast 提示
+    if (_lastQuota != null && user.quota > _lastQuota) {
+      const delta = rmbFromQuota(user.quota - _lastQuota)
+      showToast(`到账 +¥${delta}`, 'success')
+    }
+    _lastQuota = user.quota
+  } catch (e) {
+    console.error('[balance] refresh error:', e)
+  }
 }
 
 function renderPlans() {
@@ -2297,89 +2298,36 @@ document.getElementById('sidebar-menu').addEventListener('click', (e) => {
   if (mi.dataset.page === 'topup') loadTopupPage()
 })
 
-// ─── 创建订单 + 轮询 ───────────────────────────────────────────────
+// ─── 跳官网充值：简单稳定，不自己管订单 ───────────────────────────
+// 用户选好套餐 → 打开官网（自动登录态走 cookie）→ 用户在官网完成支付
+// 启动器在此后 10 分钟内每 10 秒刷新一次余额；余额上涨即 toast 提示到账
+const TOPUP_SITE_URL = 'https://aitoken.homes'  // 官网根；如后续有专属 /topup 路径再调整
+let _topupWatchTimer = null
+function startTopupWatch() {
+  if (_topupWatchTimer) clearInterval(_topupWatchTimer)
+  let elapsed = 0
+  _topupWatchTimer = setInterval(async () => {
+    elapsed += 10
+    await refreshBalance()
+    if (elapsed >= 600) {  // 10 分钟后停止
+      clearInterval(_topupWatchTimer)
+      _topupWatchTimer = null
+    }
+  }, 10000)
+}
+
 async function startPay() {
   const plan = topupPage.plans.find(p => p.id === topupPage.selectedPlanId)
   if (!plan) { showToast('请先选择套餐', 'error'); return }
-  const btn = document.getElementById('btn-pay')
-  btn.disabled = true
-  btn.textContent = '创建订单中...'
-  try {
-    const r = await window.topup.createOrder({
-      planId: plan.id,
-      payType: topupPage.selectedPayType,
-    })
-    if (!r.ok) {
-      showToast(r.error?.message || '创建订单失败', 'error')
-      return
-    }
-    topupPage.currentOrder = r.data
-    // 打开支付页
-    window.usb.openExternal(r.data.pay_url)
-    // 显示 Modal + 开始轮询
-    showPayModal()
-  } finally {
-    btn.disabled = false
-    btn.textContent = '立即支付 →'
-  }
-}
-
-function showPayModal() {
-  document.getElementById('pay-modal-bg').classList.add('show')
-  topupPage.countdownSec = 10 * 60
-  tickCountdown()
-  topupPage.countdownTimer = setInterval(tickCountdown, 1000)
-  topupPage.pollTimer = setInterval(pollOrder, 2000)
-  pollOrder()
-}
-
-function hidePayModal() {
-  document.getElementById('pay-modal-bg').classList.remove('show')
-  clearInterval(topupPage.pollTimer); topupPage.pollTimer = null
-  clearInterval(topupPage.countdownTimer); topupPage.countdownTimer = null
-}
-
-function tickCountdown() {
-  if (topupPage.countdownSec <= 0) {
-    document.getElementById('pay-modal-countdown').textContent = '订单已过期'
-    document.getElementById('pay-modal-title').textContent = '订单超时'
-    document.getElementById('pay-modal-msg').textContent = '超过 10 分钟未支付，请重新下单。'
-    clearInterval(topupPage.pollTimer); topupPage.pollTimer = null
-    clearInterval(topupPage.countdownTimer); topupPage.countdownTimer = null
-    return
-  }
-  const m = Math.floor(topupPage.countdownSec / 60)
-  const s = topupPage.countdownSec % 60
-  document.getElementById('pay-modal-countdown').textContent =
-    `剩余 ${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`
-  topupPage.countdownSec--
-}
-
-async function pollOrder() {
-  if (!topupPage.currentOrder) return
-  const r = await window.topup.orderStatus(topupPage.currentOrder.order_no)
-  if (!r.ok) return
-  const status = r.data?.status
-  if (status === 1) {
-    // 支付成功
-    clearInterval(topupPage.pollTimer); topupPage.pollTimer = null
-    clearInterval(topupPage.countdownTimer); topupPage.countdownTimer = null
-    document.getElementById('pay-modal-title').textContent = '支付成功 🎉'
-    document.getElementById('pay-modal-msg').innerHTML =
-      `已到账 <b>¥${topupPage.currentOrder.amount}</b>，额度已更新。`
-    document.getElementById('pay-modal-countdown').textContent = ''
-    await refreshBalance()
-    showToast('充值成功！', 'success')
-    setTimeout(() => hidePayModal(), 2500)
-  }
-  // status === 2 (failed) 暂未明确，忽略；后端定义清楚后可补
+  // 直接开官网；官网已经登录了（cookie 同域），直接能充值
+  window.usb.openExternal(TOPUP_SITE_URL)
+  showToast('已打开官网，完成支付后自动刷新余额', 'success')
+  // 立即先拉一次，然后每 10 秒刷新 10 分钟
+  await refreshBalance()
+  startTopupWatch()
 }
 
 document.getElementById('btn-pay').addEventListener('click', startPay)
-document.getElementById('btn-pay-reopen').addEventListener('click', () => {
-  if (topupPage.currentOrder?.pay_url) window.usb.openExternal(topupPage.currentOrder.pay_url)
-})
-document.getElementById('btn-pay-cancel').addEventListener('click', hidePayModal)
 
 // ─── 兑换码 ───────────────────────────────────────────────────────
 document.getElementById('btn-redeem').addEventListener('click', async () => {
@@ -2416,8 +2364,10 @@ document.getElementById('btn-redeem').addEventListener('click', async () => {
       setGatewayUI()
     }
   }, 1000)
-  // 每 5 秒同步一次后端状态（容错 Gateway 被外部干扰）
+  // 每 5 秒同步一次 Gateway 状态
   setInterval(refreshGatewayStatus, 5000)
+  // 每 30 秒刷新一次余额（被动更新）
+  setInterval(refreshBalance, 30000)
 })()
 </script>
 </body>

@@ -1678,6 +1678,11 @@ ipcMain.handle('auth:get-user', wrapAuth('get-user', async () => {
   return authManager ? authManager.getUserProfile() : null
 }))
 
+ipcMain.handle('auth:refresh-user', wrapAuth('refresh-user', async () => {
+  if (!authManager) return null
+  return await authManager.refreshUserProfile()
+}))
+
 ipcMain.handle('auth:reload', wrapAuth('reload', async () => {
   if (!authManager) throw new Error('AuthManager not initialized')
   return await authManager.load()

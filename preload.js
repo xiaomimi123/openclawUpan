@@ -69,6 +69,7 @@ contextBridge.exposeInMainWorld('auth', {
   logout:      ()          => ipcRenderer.invoke('auth:logout'),
   isLoggedIn:  ()          => ipcRenderer.invoke('auth:is-logged-in'),
   getUser:     ()          => ipcRenderer.invoke('auth:get-user'),
+  refreshUser: ()          => ipcRenderer.invoke('auth:refresh-user'),
   reload:      ()          => ipcRenderer.invoke('auth:reload'),
 
   // token 彻底失效时触发，UI 应跳回登录页
