@@ -28,9 +28,6 @@ contextBridge.exposeInMainWorld('usb', {
   installSkill:            (npm) => ipcRenderer.invoke('install-skill', npm),
   installFeishuPlugin:     ()   => ipcRenderer.invoke('install-feishu-plugin'),
 
-  // Support
-  getLicenseInfo: () => ipcRenderer.invoke('get-license-info'),
-
   // Pet
   showPet: () => ipcRenderer.invoke('show-pet'),
   hidePet: () => ipcRenderer.invoke('hide-pet'),

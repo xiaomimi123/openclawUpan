@@ -295,29 +295,6 @@
   </div>
 </div>
 
-<!-- Support / License Info Modal -->
-<div class="overlay" id="modal-support">
-  <div style="background:#141425;border:1px solid #1e1e35;border-radius:12px;padding:24px;width:420px;display:flex;flex-direction:column;gap:14px;">
-    <h3 style="font-size:15px;color:#e8e0e0">📋 授权信息（售后专用）</h3>
-    <div style="font-size:11px;color:#535370;line-height:1.6">
-      将以下信息发送给客服，用于核验授权并获取更新文件。
-    </div>
-    <div id="support-info-box"
-      style="background:#0a0a1a;border:1px solid #1e1e35;border-radius:8px;padding:12px 14px;
-             font-family:Consolas,monospace;font-size:12px;color:#9a8aaa;line-height:2;
-             user-select:all;cursor:text;">
-      读取中...
-    </div>
-    <div style="font-size:11px;color:#535370">
-      ⬆ 点击上方文字框可全选，然后 Ctrl+C 复制
-    </div>
-    <div style="display:flex;gap:10px;justify-content:flex-end">
-      <button class="btn btn-secondary" onclick="closeSupportModal()">关闭</button>
-      <button class="btn btn-ui" onclick="copySupportInfo(this)">📋 一键复制</button>
-    </div>
-  </div>
-</div>
-
 <!-- USB removed overlay -->
 <div class="overlay" id="usb-overlay">
   <div style="font-size:52px">🔌</div>
@@ -708,33 +685,6 @@ async function autoKillPort() {
     setStatus('error', '端口被占用', '请手动关闭占用端口的程序后重新启动')
     document.getElementById('btn-start').classList.remove('hidden')
   }
-}
-
-// ── Support Modal ──
-async function openSupportModal() {
-  document.getElementById('support-info-box').textContent = '读取中...'
-  document.getElementById('modal-support').classList.add('show')
-  try {
-    const info = await window.usb.getLicenseInfo()
-    document.getElementById('support-info-box').textContent =
-      `版本号:  v${info.version}\n` +
-      `U盘钥匙序列号: ${info.serial}\n` +
-      `平台:  ${info.platform} / ${info.arch}`
-  } catch (e) {
-    document.getElementById('support-info-box').textContent = '读取失败: ' + e.message
-  }
-}
-
-function closeSupportModal() {
-  document.getElementById('modal-support').classList.remove('show')
-}
-
-function copySupportInfo(btn) {
-  const text = document.getElementById('support-info-box').textContent
-  navigator.clipboard.writeText(text).then(() => {
-    btn.textContent = '✅ 已复制'
-    setTimeout(() => { btn.textContent = '📋 一键复制' }, 2000)
-  })
 }
 
 // ── 推荐插件安装 ──

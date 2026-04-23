@@ -17,7 +17,6 @@ const {
 } = require('./src/config')
 
 const { translateLog } = require('./src/log-translate')
-const { getVolSerial, verifyLicense } = require('./src/license')
 const { syncFromUsb, syncToUsb } = require('./src/usb-sync')
 
 const APP_VERSION = require('./package.json').version
@@ -494,7 +493,6 @@ if (!gotLock) {
   })
 
   app.whenReady().then(async () => {
-    if (!await verifyLicense()) return
     ensureOpenclawShim()
     createWindow()
     startUsbMonitor()
@@ -1536,21 +1534,9 @@ ipcMain.handle('install-feishu-plugin', async () => {
   return { ok: true }
 })
 
-// ─── IPC: Version / License ───────────────────────────────────────────────
+// ─── IPC: Version ─────────────────────────────────────────────────────────
 
 ipcMain.handle('get-version', () => app.getVersion())
-
-ipcMain.handle('get-license-info', async () => {
-  const drive = path.resolve(usbRoot).charAt(0).toUpperCase()
-  let serial = '未知'
-  try { serial = await getVolSerial(drive) } catch {}
-  return {
-    version:  app.getVersion(),
-    serial,
-    platform: process.platform,
-    arch:     process.arch,
-  }
-})
 
 // ─── IPC: Preflight check ─────────────────────────────────────────────────
 
