@@ -100,3 +100,12 @@ contextBridge.exposeInMainWorld('models', {
   // 官方上架的模型目录（公开接口）
   listOfficial:      () => ipcRenderer.invoke('models:list-official'),
 })
+
+// ─── V5：充值（灵境AI 聚合支付） ────────────────────────────────────────
+contextBridge.exposeInMainWorld('topup', {
+  listPlans:    ()             => ipcRenderer.invoke('topup:list-plans'),
+  payConfig:    ()             => ipcRenderer.invoke('topup:pay-config'),
+  createOrder:  (payload)      => ipcRenderer.invoke('topup:create-order', payload),
+  orderStatus:  (orderNo)      => ipcRenderer.invoke('topup:order-status', orderNo),
+  redeem:       (key)          => ipcRenderer.invoke('topup:redeem', key),
+})

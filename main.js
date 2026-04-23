@@ -1780,6 +1780,50 @@ ipcMain.handle('models:list-official', async () => {
   }
 })
 
+// ─── IPC: V5 充值（灵境AI 聚合支付）─────────────────────────────────────
+function topupErrWrap(fn) {
+  return async (...args) => {
+    if (!authManager) return { ok: false, error: { message: 'AuthManager not initialized' } }
+    try {
+      const data = await fn(...args)
+      return { ok: true, data }
+    } catch (e) {
+      return { ok: false, error: { message: e.message, status: e.status || 0, code: e.code || null } }
+    }
+  }
+}
+
+// 套餐列表（公开）
+ipcMain.handle('topup:list-plans', topupErrWrap(async () => {
+  const list = await authManager.apiClient.get('/api/lingjing/plans', { auth: false })
+  const visible = Array.isArray(list) ? list.filter(p => p.is_available !== false) : []
+  visible.sort((a, b) => (a.sort_order || 0) - (b.sort_order || 0) || a.price - b.price)
+  return visible
+}))
+
+// 支付方式开关（公开）
+ipcMain.handle('topup:pay-config', topupErrWrap(async () => {
+  return await authManager.apiClient.get('/api/lingjing/pay/config', { auth: false })
+}))
+
+// 创建订单：返回 { pay_url, order_no, amount, quota }
+ipcMain.handle('topup:create-order', topupErrWrap(async (_e, { planId, payType }) => {
+  return await authManager.apiClient.post('/api/lingjing/pay/create', {
+    plan_id: planId,
+    pay_type: payType || 'alipay',
+  })
+}))
+
+// 查订单状态：status 0=pending, 1=paid
+ipcMain.handle('topup:order-status', topupErrWrap(async (_e, orderNo) => {
+  return await authManager.apiClient.get(`/api/lingjing/pay/order/${encodeURIComponent(orderNo)}`)
+}))
+
+// 兑换码
+ipcMain.handle('topup:redeem', topupErrWrap(async (_e, key) => {
+  return await authManager.apiClient.post('/api/user/topup', { key })
+}))
+
 // ─── IPC: Preflight check ─────────────────────────────────────────────────
 
 function checkPortFreeOn(port, host) {
