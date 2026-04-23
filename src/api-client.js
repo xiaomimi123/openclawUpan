@@ -188,8 +188,8 @@ class ApiClient {
       clearTimeout(timer)
     }
 
-    // 自动捕获 Set-Cookie（仅 cookie 模式且响应带 Set-Cookie）
-    if (auth === 'cookie') {
+    // 自动捕获 Set-Cookie（除 bearer 模式外都捕获，包括 auth=false 的登录调用）
+    if (auth !== 'bearer') {
       const setCookieHeader = pickSetCookie(res.headers)
       if (setCookieHeader) {
         const sessionCookie = extractSessionCookie(setCookieHeader)

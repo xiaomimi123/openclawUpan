@@ -551,7 +551,7 @@ if (window.loginWin && window.loginWin.onDebugLog) {
   })
 }
 
-appendLog('info', '登录窗已就绪')
+appendLog('info', 'Login window ready')
 
 let toastTimer = null
 function showToast(msg, type = '') {
@@ -613,17 +613,17 @@ btnSendCode.addEventListener('click', async () => {
 
   btnSendCode.disabled = true
   btnSendCode.textContent = '发送中...'
-  appendLog('info', '发送验证码 → ' + email)
+  appendLog('info', 'sendCode -> ' + email)
 
   const r = await window.auth.sendCode(email)
   if (!r.ok) {
     btnSendCode.disabled = false
     btnSendCode.textContent = '发送验证码'
-    appendLog('error', '发送验证码失败: ' + (r.error?.message || ''))
+    appendLog('error', 'sendCode FAIL: ' + (r.error?.message || ''))
     showToast(r.error?.message || '发送失败，请稍后再试', 'error')
     return
   }
-  appendLog('info', '验证码已发送')
+  appendLog('info', 'sendCode OK')
   showToast('验证码已发送，请查收邮箱', 'success')
   codeCountdown = 60
   tickCodeCountdown()
@@ -639,17 +639,17 @@ forms.login.addEventListener('submit', async (e) => {
 
   const btn = forms.login.querySelector('.btn-primary')
   setButtonLoading(btn, true)
-  appendLog('info', '登录 → ' + username)
+  appendLog('info', 'login -> ' + username)
   try {
     const r = await window.auth.login({ username, password })
     if (!r.ok) {
-      appendLog('error', '登录失败: ' + (r.error?.message || '') +
+      appendLog('error', 'login FAIL: ' + (r.error?.message || '') +
                         (r.error?.status ? ` (status=${r.error.status})` : '') +
                         (r.error?.code ? ` (code=${r.error.code})` : ''))
       showToast(r.error?.message || '登录失败', 'error')
       return
     }
-    appendLog('info', '登录成功，准备切主窗口')
+    appendLog('info', 'login OK, transitioning to main window')
     showToast('登录成功，正在进入...', 'success')
     setTimeout(() => window.loginWin.transitionToMain(), 500)
   } finally {
@@ -678,7 +678,7 @@ forms.register.addEventListener('submit', async (e) => {
 
   const btn = forms.register.querySelector('.btn-primary')
   setButtonLoading(btn, true)
-  appendLog('info', `注册 → email=${email}, username=${username}`)
+  appendLog('info', `register -> email=${email}, username=${username}`)
   try {
     const r = await window.auth.register({
       username,
@@ -687,12 +687,12 @@ forms.register.addEventListener('submit', async (e) => {
       verification_code: code,
     })
     if (!r.ok) {
-      appendLog('error', '注册失败: ' + (r.error?.message || '') +
+      appendLog('error', 'register FAIL: ' + (r.error?.message || '') +
                         (r.error?.status ? ` (status=${r.error.status})` : ''))
       showToast(r.error?.message || '注册失败', 'error')
       return
     }
-    appendLog('info', '注册成功，准备切主窗口')
+    appendLog('info', 'register OK, transitioning to main window')
     showToast('注册成功，正在进入...', 'success')
     setTimeout(() => window.loginWin.transitionToMain(), 500)
   } finally {

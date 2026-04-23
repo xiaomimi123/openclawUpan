@@ -1636,22 +1636,22 @@ function wrapAuth(label, fn) {
 }
 
 ipcMain.handle('auth:send-code', wrapAuth('send-code', async (_e, email) => {
-  if (!authManager) throw new Error('AuthManager 未初始化')
+  if (!authManager) throw new Error('AuthManager not initialized')
   return await authManager.sendCode(email)
 }))
 
 ipcMain.handle('auth:register', wrapAuth('register', async (_e, payload) => {
-  if (!authManager) throw new Error('AuthManager 未初始化')
+  if (!authManager) throw new Error('AuthManager not initialized')
   return await authManager.register(payload)
 }))
 
 ipcMain.handle('auth:login', wrapAuth('login', async (_e, payload) => {
-  if (!authManager) throw new Error('AuthManager 未初始化')
+  if (!authManager) throw new Error('AuthManager not initialized')
   return await authManager.login(payload)
 }))
 
 ipcMain.handle('auth:logout', wrapAuth('logout', async () => {
-  if (!authManager) throw new Error('AuthManager 未初始化')
+  if (!authManager) throw new Error('AuthManager not initialized')
   await authManager.logout()
   return { ok: true }
 }))
@@ -1665,7 +1665,7 @@ ipcMain.handle('auth:get-user', wrapAuth('get-user', async () => {
 }))
 
 ipcMain.handle('auth:reload', wrapAuth('reload', async () => {
-  if (!authManager) throw new Error('AuthManager 未初始化')
+  if (!authManager) throw new Error('AuthManager not initialized')
   return await authManager.load()
 }))
 

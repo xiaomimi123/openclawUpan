@@ -128,7 +128,7 @@ async function run() {
     await assert.rejects(c.get('/v1/models', { auth: 'bearer' }), /bearerToken/)
   })
 
-  await test('登录响应 Set-Cookie 被 setCookie 回调捕获', async () => {
+  await test('auth=false 登录也能捕获 Set-Cookie（关键：登录时 auth=false，响应 Set-Cookie 必须被存）', async () => {
     let captured = null
     const fetchImpl = makeFetch([mockResponse({
       body: { success: true, data: { id: 6, username: 'x' } },
@@ -140,16 +140,22 @@ async function run() {
       fetchImpl,
     })
     await c.post('/api/user/login', { username: 'a', password: 'b' }, { auth: false })
-    // 重要：即使 auth=false，响应的 Set-Cookie 也应该被捕获？
-    // 注：我们的实现里 Set-Cookie 仅在 auth==='cookie' 模式下捕获。
-    // 这与登录实际用法冲突：登录发请求时没 cookie，但响应带 Set-Cookie。
-    // 所以测试期望：auth=false 时不捕获，测试改成 auth=cookie 形态。
-    // （业务侧 AuthManager.login 会用 auth:false 但手动调 setCookie，或者我们放宽模式）
-    // ─ 实际上：ApiClient 登录时由于没 cookie，浏览器/fetch 仍会接收 Set-Cookie。
-    // 我们的语义：cookie 模式下自动存，非 cookie 模式下不管。
-    // 所以 AuthManager.login 需要用 auth=cookie 但 getCookie 返回 null（无 cookie 也能发请求）。
-    // 这个测试我们改用 auth='cookie' + getCookie: null 模式验证。
-    assert.strictEqual(captured, null)  // auth=false 不捕获
+    assert.strictEqual(captured, 'session=abc123xyz')
+  })
+
+  await test('auth=bearer 模式不捕获 Set-Cookie（bearer 与 cookie 世界隔离）', async () => {
+    let captured = null
+    const fetchImpl = makeFetch([mockResponse({
+      body: { success: true, data: null },
+      headers: { 'set-cookie': 'session=should_not_capture; Path=/' },
+    })])
+    const c = new ApiClient({
+      baseUrl: 'https://x.test',
+      setCookie: (v) => { captured = v },
+      fetchImpl,
+    })
+    await c.get('/v1/models', { auth: 'bearer', bearerToken: 'sk-abc', unwrap: false })
+    assert.strictEqual(captured, null)
   })
 
   await test('登录用 auth=cookie 且无初始 cookie → 响应 Set-Cookie 被捕获', async () => {

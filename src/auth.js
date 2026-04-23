@@ -27,7 +27,7 @@ class AuthManager {
    * @param {typeof fetch} [opts.fetchImpl]       自建 ApiClient 时透传
    */
   constructor({ authPath, apiClient = null, onAuthFailed = null, fetchImpl = null } = {}) {
-    if (!authPath) throw new Error('AuthManager: authPath 必填')
+    if (!authPath) throw new Error('AuthManager: authPath is required')
     this.authPath = authPath
     this.state = null  // { session, user, savedAt }
     this._onAuthFailed = onAuthFailed || (() => {})
@@ -126,7 +126,7 @@ class AuthManager {
    */
   async register({ username, email, password, verification_code }) {
     if (!username || !email || !password || !verification_code) {
-      throw new Error('注册字段缺失')
+      throw new Error('Register payload missing required fields')
     }
     await this.apiClient.post(
       ENDPOINTS.REGISTER,
@@ -151,7 +151,7 @@ class AuthManager {
     )
     // 登录成功后 state.session 已由 _updateSessionCookie 写入
     if (!this.state || !this.state.session) {
-      throw new Error('登录成功但未收到 session cookie')
+      throw new Error('Login succeeded but no session cookie received')
     }
     this.state.user = data && typeof data === 'object' ? data : { username }
     await this.save()

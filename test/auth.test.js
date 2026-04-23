@@ -230,7 +230,7 @@ async function run() {
     const { authPath, cleanup } = mkTmpAuthPath()
     try {
       const m = new AuthManager({ authPath, apiClient: mockClient() })
-      await assert.rejects(m.register({ email: 'a@b.c', password: 'pw', verification_code: '1' }), /缺失/)
+      await assert.rejects(m.register({ email: 'a@b.c', password: 'pw', verification_code: '1' }), /missing|required/i)
     } finally { cleanup() }
   })
 
