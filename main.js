@@ -73,9 +73,9 @@ function pushLoginDebug(level, message) {
   if (loginWindow && !loginWindow.isDestroyed()) {
     try { loginWindow.webContents.send('login-win:debug-log', { level, message }) } catch {}
   }
-  // 同时 console 输出，便于终端看
-  if (level === 'error') console.error('[login]', message)
-  else console.log('[login]', message)
+  // 同时 console 输出，便于终端看（auth 前缀 -- 登录窗或主窗都可能触发）
+  if (level === 'error') console.error('[auth]', message)
+  else console.log('[auth]', message)
 }
 
 // ─── 插件注册 ────────────────────────────────────────────────────────────
