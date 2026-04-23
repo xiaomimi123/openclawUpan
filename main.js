@@ -47,6 +47,7 @@ const syncLocals = {
 let mainWindow
 let petWindow = null
 let openclawProc = null
+let openclawStartedAt = null  // ms timestamp；Gateway 首页显示运行时长
 let usbMonitorTimer = null
 let currentGatewayToken = null
 let startingOpenclaw = false
@@ -884,6 +885,7 @@ function killOpenclaw() {
   const proc = openclawProc
   const pid = proc.pid
   openclawProc = null
+  openclawStartedAt = null
 
   // 等子进程真正 exit 再 resolve，让调用方可以安全地做写回操作
   const exitPromise = new Promise(resolve => {
@@ -989,7 +991,9 @@ ipcMain.handle('save-setup', async (_, setup) => {
 // ─── IPC: Start / Stop OpenClaw ──────────────────────────────────────────
 
 ipcMain.handle('get-openclaw-status', () => ({
-  running: openclawProc !== null
+  running: openclawProc !== null,
+  startedAt: openclawStartedAt,
+  port: 18789,
 }))
 
 ipcMain.handle('start-openclaw', async () => {
@@ -1085,11 +1089,13 @@ ipcMain.handle('start-openclaw', async () => {
     }
     openclawProc.stdout.on('data', onLog)
     openclawProc.stderr.on('data', onLog)
+    openclawStartedAt = Date.now()
     updatePetStatus(true)
 
-    const startTime = Date.now()
+    const startTime = openclawStartedAt
     openclawProc.on('exit', async (code) => {
       openclawProc = null
+      openclawStartedAt = null
       currentGatewayToken = null
       updatePetStatus(false)
 

@@ -394,6 +394,215 @@ body {
 }
 .btn-danger:hover { background: rgba(248, 113, 113, 0.1); }
 
+/* ─── 首页 Gateway ─── */
+.gateway-hero {
+  background: linear-gradient(135deg, var(--bg-card), var(--bg-elevated));
+  border: 1px solid var(--border-subtle);
+  border-radius: 12px;
+  padding: 24px 28px;
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  margin-bottom: 24px;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.2);
+}
+.gateway-hero-left { flex: 1; }
+.gateway-hero-label {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--text-muted);
+  letter-spacing: 0.15em;
+  margin-bottom: 6px;
+}
+.gateway-hero-title {
+  font-family: var(--font-display);
+  font-size: 26px;
+  font-weight: 500;
+  letter-spacing: -0.02em;
+  margin-bottom: 8px;
+}
+.gateway-hero-status {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  color: var(--text-muted);
+  font-family: var(--font-mono);
+}
+.gateway-hero-status .status-dot {
+  width: 8px; height: 8px; border-radius: 50%;
+  background: var(--text-muted);
+}
+.gateway-hero-status.running .status-dot {
+  background: var(--success);
+  box-shadow: 0 0 0 3px var(--success-dim);
+  animation: pulse 2s ease-in-out infinite;
+}
+.gateway-hero-status.starting .status-dot {
+  background: var(--warning);
+  animation: pulse 0.8s ease-in-out infinite;
+}
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+
+.gateway-hero-right { display: flex; gap: 10px; align-items: center; }
+.btn {
+  height: 38px;
+  padding: 0 18px;
+  border-radius: 7px;
+  font-size: 13px;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  transition: all 0.15s;
+  border: none;
+}
+.btn:disabled { opacity: 0.6; cursor: not-allowed; }
+
+.btn-primary-main {
+  background: var(--brand);
+  color: white;
+}
+.btn-primary-main:hover:not(:disabled) {
+  background: var(--brand-hover);
+  box-shadow: 0 4px 14px var(--brand-glow);
+}
+
+.btn-stop {
+  background: var(--bg-elevated);
+  color: var(--text-primary);
+  border: 1px solid var(--border-default);
+}
+.btn-stop:hover:not(:disabled) {
+  background: var(--bg-card-hover);
+  border-color: var(--border-strong);
+}
+
+.btn-repair {
+  background: transparent;
+  color: var(--text-secondary);
+  border: 1px solid var(--border-default);
+}
+.btn-repair:hover:not(:disabled) {
+  background: var(--bg-card);
+  color: var(--text-primary);
+}
+
+/* 状态卡片网格 */
+.status-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 14px;
+  margin-bottom: 24px;
+}
+.status-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border-subtle);
+  border-radius: 10px;
+  padding: 14px 16px;
+}
+.status-card-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+}
+.status-icon {
+  width: 22px; height: 22px;
+  border-radius: 5px;
+  background: var(--brand-dim);
+  color: var(--brand);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.status-icon.ok { background: var(--success-dim); color: var(--success); }
+.status-icon.warn { background: rgba(251, 191, 36, 0.12); color: var(--warning); }
+.status-mono {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  color: var(--text-muted);
+  letter-spacing: 0.1em;
+}
+.status-card-name {
+  font-size: 12px;
+  color: var(--text-muted);
+  margin-bottom: 4px;
+}
+.status-card-value {
+  font-family: var(--font-mono);
+  font-size: 13px;
+  color: var(--text-primary);
+  font-weight: 500;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* 日志面板 */
+.gateway-log-panel {
+  background: var(--bg-card);
+  border: 1px solid var(--border-subtle);
+  border-radius: 10px;
+  overflow: hidden;
+}
+.gateway-log-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 16px;
+  background: var(--bg-elevated);
+  border-bottom: 1px solid var(--border-subtle);
+  cursor: pointer;
+  user-select: none;
+}
+.gateway-log-head .title {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--text-secondary);
+  letter-spacing: 0.08em;
+}
+.gateway-log-head .actions { display: flex; gap: 8px; }
+.gateway-log-head button {
+  background: transparent;
+  border: 1px solid var(--border-subtle);
+  color: var(--text-muted);
+  font-family: inherit;
+  font-size: 11px;
+  padding: 3px 10px;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.gateway-log-head button:hover {
+  color: var(--text-primary);
+  border-color: var(--border-default);
+}
+.gateway-log-body {
+  max-height: 260px;
+  overflow-y: auto;
+  padding: 10px 16px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--text-secondary);
+  line-height: 1.6;
+  white-space: pre-wrap;
+  word-break: break-all;
+}
+.gateway-log-body:empty::before {
+  content: '— 暂无日志（点启动 Gateway 后开始输出）—';
+  color: var(--text-subtle);
+  font-style: italic;
+}
+.gateway-log-panel.collapsed .gateway-log-body { display: none; }
+.log-line { padding: 1px 0; }
+.log-line.err { color: var(--danger); }
+
 /* ─── Toast ─── */
 #toast {
   position: fixed;
@@ -509,10 +718,71 @@ body {
 
     <div class="content-area">
       <div class="page-view active" id="page-home">
-        <div class="empty-state">
-          <div class="icon"><svg width="28" height="28"><use href="#logo-claw"/></svg></div>
-          <div class="title">首页 · Gateway 控制中心</div>
-          <div class="desc">此页面将在下一步实现：一键启停 Gateway + 运行状态 + 系统信息卡片</div>
+        <div class="gateway-hero">
+          <div class="gateway-hero-left">
+            <div class="gateway-hero-label">GATEWAY CONTROL</div>
+            <div class="gateway-hero-title" id="gateway-title">Gateway 已停止</div>
+            <div class="gateway-hero-status" id="gateway-status-line">
+              <div class="status-dot"></div>
+              <span id="gateway-status-text">点"启动 Gateway"开始</span>
+            </div>
+          </div>
+          <div class="gateway-hero-right">
+            <button class="btn btn-repair" id="btn-repair">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg>
+              修复
+            </button>
+            <button class="btn btn-primary-main" id="btn-launch">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><polygon points="6 4 20 12 6 20 6 4"/></svg>
+              <span id="btn-launch-text">启动 Gateway</span>
+            </button>
+          </div>
+        </div>
+
+        <div class="status-grid" id="status-grid">
+          <div class="status-card">
+            <div class="status-card-head">
+              <div class="status-icon ok"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><polyline points="20 6 9 17 4 12"/></svg></div>
+              <div class="status-mono">APP</div>
+            </div>
+            <div class="status-card-name">启动器版本</div>
+            <div class="status-card-value" id="card-app-version">-</div>
+          </div>
+          <div class="status-card">
+            <div class="status-card-head">
+              <div class="status-icon"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg></div>
+              <div class="status-mono">PORT</div>
+            </div>
+            <div class="status-card-name">Gateway 端口</div>
+            <div class="status-card-value" id="card-port">18789</div>
+          </div>
+          <div class="status-card">
+            <div class="status-card-head">
+              <div class="status-icon"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></div>
+              <div class="status-mono">UP</div>
+            </div>
+            <div class="status-card-name">运行时长</div>
+            <div class="status-card-value" id="card-uptime">--</div>
+          </div>
+          <div class="status-card">
+            <div class="status-card-head">
+              <div class="status-icon"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 2a10 10 0 1 0 10 10"/><path d="M12 6v6l4 2"/></svg></div>
+              <div class="status-mono">QUOTA</div>
+            </div>
+            <div class="status-card-name">账户额度</div>
+            <div class="status-card-value" id="card-quota">-</div>
+          </div>
+        </div>
+
+        <div class="gateway-log-panel collapsed" id="gateway-log">
+          <div class="gateway-log-head" id="gateway-log-head">
+            <span class="title">▸ GATEWAY 日志</span>
+            <div class="actions">
+              <button type="button" id="btn-copy-gateway-log">复制</button>
+              <button type="button" id="btn-clear-gateway-log">清空</button>
+            </div>
+          </div>
+          <div class="gateway-log-body" id="gateway-log-body"></div>
         </div>
       </div>
 
@@ -718,6 +988,254 @@ if (window.usb && window.usb.onUsbRemoved) {
     showToast('U 盘钥匙已移除', 'error')
   })
 }
+
+// ─── Gateway 控制 ────────────────────────────────────────────────────
+const gw = {
+  status: 'stopped',    // 'stopped' | 'starting' | 'running' | 'stopping'
+  startedAt: null,
+  port: 18789,
+  uptimeTimer: null,
+}
+
+function setGatewayUI() {
+  const title = document.getElementById('gateway-title')
+  const line  = document.getElementById('gateway-status-line')
+  const text  = document.getElementById('gateway-status-text')
+  const btn   = document.getElementById('btn-launch')
+  const btnText = document.getElementById('btn-launch-text')
+  const sideBtn = document.getElementById('btn-gateway')
+  const sideBtnText = sideBtn.querySelector('span')
+  const topBadge = document.getElementById('gateway-badge')
+
+  line.classList.remove('running', 'starting')
+
+  if (gw.status === 'running') {
+    title.textContent = 'Gateway 运行中'
+    line.classList.add('running')
+    text.textContent = `已服务 ${formatUptime(Date.now() - gw.startedAt)} · localhost:${gw.port}`
+    btn.classList.remove('btn-primary-main')
+    btn.classList.add('btn-stop')
+    btn.querySelector('svg').innerHTML = '<rect x="6" y="5" width="4" height="14" rx="1"/><rect x="14" y="5" width="4" height="14" rx="1"/>'
+    btnText.textContent = '停止'
+    btn.disabled = false
+    sideBtn.classList.add('stop')
+    sideBtn.disabled = false
+    sideBtnText.textContent = '停止 Gateway'
+    topBadge.classList.add('live')
+    topBadge.textContent = 'RUNNING'
+  } else if (gw.status === 'starting') {
+    title.textContent = 'Gateway 启动中...'
+    line.classList.add('starting')
+    text.textContent = '正在初始化服务'
+    btn.disabled = true
+    btnText.textContent = '启动中...'
+    sideBtn.disabled = true
+    topBadge.classList.remove('live')
+    topBadge.textContent = 'STARTING'
+  } else if (gw.status === 'stopping') {
+    title.textContent = 'Gateway 停止中...'
+    text.textContent = '正在关闭服务'
+    btn.disabled = true
+    btnText.textContent = '停止中...'
+    sideBtn.disabled = true
+    topBadge.classList.remove('live')
+    topBadge.textContent = 'STOPPING'
+  } else {
+    title.textContent = 'Gateway 已停止'
+    text.textContent = '点"启动 Gateway"开始'
+    btn.classList.remove('btn-stop')
+    btn.classList.add('btn-primary-main')
+    btn.querySelector('svg').innerHTML = '<polygon points="6 4 20 12 6 20 6 4"/>'
+    btnText.textContent = '启动 Gateway'
+    btn.disabled = false
+    sideBtn.classList.remove('stop')
+    sideBtn.disabled = false
+    sideBtnText.textContent = '启动 Gateway'
+    topBadge.classList.remove('live')
+    topBadge.textContent = 'STOPPED'
+  }
+
+  // 运行时长
+  const uptimeCard = document.getElementById('card-uptime')
+  if (gw.status === 'running' && gw.startedAt) {
+    uptimeCard.textContent = formatUptime(Date.now() - gw.startedAt)
+  } else {
+    uptimeCard.textContent = '--'
+  }
+  document.getElementById('card-port').textContent = String(gw.port)
+}
+
+function formatUptime(ms) {
+  if (!ms || ms < 0) return '--'
+  const s = Math.floor(ms / 1000)
+  const h = Math.floor(s / 3600)
+  const m = Math.floor((s % 3600) / 60)
+  const sec = s % 60
+  if (h > 0) return `${h}h ${String(m).padStart(2,'0')}m ${String(sec).padStart(2,'0')}s`
+  return `${String(m).padStart(2,'0')}:${String(sec).padStart(2,'0')}`
+}
+
+async function refreshGatewayStatus() {
+  try {
+    const s = await window.usb.getOpenclawStatus()
+    gw.startedAt = s.startedAt || null
+    gw.port = s.port || 18789
+    if (s.running) {
+      if (gw.status !== 'starting') gw.status = 'running'
+    } else {
+      if (gw.status !== 'starting' && gw.status !== 'stopping') gw.status = 'stopped'
+    }
+    setGatewayUI()
+  } catch {}
+}
+
+async function onStartGateway() {
+  if (gw.status === 'running' || gw.status === 'starting') {
+    await onStopGateway()
+    return
+  }
+  gw.status = 'starting'
+  setGatewayUI()
+  try {
+    const r = await window.usb.startOpenclaw()
+    if (!r || !r.ok) {
+      showToast(r?.error || 'Gateway 启动失败', 'error')
+      gw.status = 'stopped'
+      setGatewayUI()
+      // 展开日志帮助用户定位问题
+      document.getElementById('gateway-log').classList.remove('collapsed')
+      return
+    }
+    // 启动成功后轮询确认运行中
+    await refreshGatewayStatus()
+  } catch (e) {
+    showToast('启动异常: ' + e.message, 'error')
+    gw.status = 'stopped'
+    setGatewayUI()
+  }
+}
+
+async function onStopGateway() {
+  gw.status = 'stopping'
+  setGatewayUI()
+  try {
+    await window.usb.stopOpenclaw()
+  } catch (e) {
+    showToast('停止异常: ' + e.message, 'error')
+  }
+  gw.status = 'stopped'
+  gw.startedAt = null
+  setGatewayUI()
+}
+
+document.getElementById('btn-launch').addEventListener('click', onStartGateway)
+document.getElementById('btn-gateway').addEventListener('click', onStartGateway)
+document.getElementById('btn-repair').addEventListener('click', async () => {
+  const btn = document.getElementById('btn-repair')
+  btn.disabled = true
+  const old = btn.innerHTML
+  btn.innerHTML = '修复中...'
+  try {
+    const r = await window.usb.repairConfig()
+    if (r && r.ok) showToast('配置已修复', 'success')
+    else showToast('修复失败: ' + (r?.error || '未知错误'), 'error')
+  } catch (e) {
+    showToast('修复异常: ' + e.message, 'error')
+  } finally {
+    btn.disabled = false
+    btn.innerHTML = old
+  }
+})
+
+// ─── Gateway 日志订阅 ────────────────────────────────────────────────
+const gatewayLogBody = document.getElementById('gateway-log-body')
+const gatewayLogPanel = document.getElementById('gateway-log')
+const GATEWAY_LOG_MAX_LINES = 500
+function appendGatewayLog(msg, level = '') {
+  const text = String(msg || '').replace(/\r/g, '')
+  text.split('\n').forEach(line => {
+    if (!line) return
+    const row = document.createElement('div')
+    row.className = 'log-line ' + level
+    row.textContent = line
+    gatewayLogBody.appendChild(row)
+  })
+  while (gatewayLogBody.children.length > GATEWAY_LOG_MAX_LINES) {
+    gatewayLogBody.removeChild(gatewayLogBody.firstChild)
+  }
+  gatewayLogBody.scrollTop = gatewayLogBody.scrollHeight
+}
+document.getElementById('gateway-log-head').addEventListener('click', (e) => {
+  if (e.target.tagName === 'BUTTON') return
+  gatewayLogPanel.classList.toggle('collapsed')
+  const collapsed = gatewayLogPanel.classList.contains('collapsed')
+  gatewayLogPanel.querySelector('.title').textContent = (collapsed ? '▸ ' : '▾ ') + 'GATEWAY 日志'
+})
+document.getElementById('btn-copy-gateway-log').addEventListener('click', (e) => {
+  e.stopPropagation()
+  const rows = [...gatewayLogBody.querySelectorAll('.log-line')].map(r => r.textContent)
+  if (!rows.length) { showToast('无日志可复制', 'error'); return }
+  navigator.clipboard.writeText(rows.join('\n')).then(
+    () => showToast('已复制 ' + rows.length + ' 行', 'success'),
+    () => showToast('复制失败', 'error')
+  )
+})
+document.getElementById('btn-clear-gateway-log').addEventListener('click', (e) => {
+  e.stopPropagation()
+  gatewayLogBody.innerHTML = ''
+})
+
+if (window.usb && window.usb.onOpenclawLog) {
+  window.usb.onOpenclawLog(msg => {
+    appendGatewayLog(msg)
+  })
+}
+if (window.usb && window.usb.onOpenclawStopped) {
+  window.usb.onOpenclawStopped(code => {
+    appendGatewayLog(`\n[Gateway 已退出，exit code=${code}]\n`, 'err')
+    gw.status = 'stopped'
+    gw.startedAt = null
+    setGatewayUI()
+  })
+}
+if (window.usb && window.usb.onNetworkRetry) {
+  window.usb.onNetworkRetry(() => {
+    appendGatewayLog('\n[网络重试中...]\n')
+    showToast('Gateway 网络重试中', 'error')
+  })
+}
+if (window.usb && window.usb.onAutoRestart) {
+  window.usb.onAutoRestart(() => {
+    appendGatewayLog('\n[Gateway 自动重启]\n')
+  })
+}
+
+// ─── 状态卡片：账户额度 ────────────────────────────────────────────
+async function updateQuotaCard() {
+  try {
+    const r = await window.auth.getUser()
+    const user = (r && r.ok) ? r.data : null
+    if (user && user.quota != null) {
+      document.getElementById('card-quota').textContent = String(user.quota)
+    }
+  } catch {}
+}
+
+// ─── 初始化 ────────────────────────────────────────────────────────
+;(async () => {
+  document.getElementById('card-app-version').textContent =
+    document.getElementById('app-version').textContent
+  await refreshGatewayStatus()
+  await updateQuotaCard()
+  // 每秒更新运行时长
+  setInterval(() => {
+    if (gw.status === 'running' && gw.startedAt) {
+      setGatewayUI()
+    }
+  }, 1000)
+  // 每 5 秒同步一次后端状态（容错 Gateway 被外部干扰）
+  setInterval(refreshGatewayStatus, 5000)
+})()
 </script>
 </body>
 </html>
