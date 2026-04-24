@@ -945,6 +945,52 @@ body {
 .topup-sub .label { opacity: 0.7; }
 .topup-sub .value { margin-left: 6px; }
 
+/* 到账成功 banner（手动关闭） */
+.topup-success-banner {
+  display: none;
+  background: linear-gradient(135deg, rgba(74, 222, 128, 0.12), rgba(74, 222, 128, 0.04));
+  border: 1px solid rgba(74, 222, 128, 0.4);
+  border-radius: 10px;
+  padding: 14px 16px;
+  margin-bottom: 14px;
+  color: var(--success);
+  align-items: center;
+  gap: 12px;
+}
+.topup-success-banner.show { display: flex; }
+.topup-success-banner .icon {
+  width: 32px; height: 32px;
+  border-radius: 50%;
+  background: var(--success);
+  color: #062312;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+.topup-success-banner .content { flex: 1; }
+.topup-success-banner .title {
+  font-family: var(--font-display);
+  font-size: 15px;
+  font-weight: 600;
+  margin-bottom: 2px;
+}
+.topup-success-banner .sub {
+  font-size: 11px;
+  opacity: 0.85;
+}
+.topup-success-banner button {
+  background: transparent;
+  border: 1px solid var(--success);
+  color: var(--success);
+  padding: 5px 12px;
+  border-radius: 6px;
+  font-size: 12px;
+  cursor: pointer;
+  font-family: inherit;
+}
+.topup-success-banner button:hover { background: rgba(74, 222, 128, 0.1); }
+
 .topup-info-banner {
   display: flex;
   gap: 10px;
@@ -1460,6 +1506,17 @@ body {
           </div>
         </div>
 
+        <div class="topup-success-banner" id="topup-success-banner">
+          <div class="icon">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><polyline points="20 6 9 17 4 12"/></svg>
+          </div>
+          <div class="content">
+            <div class="title" id="topup-success-title">充值成功 🎉</div>
+            <div class="sub" id="topup-success-sub">额度已到账</div>
+          </div>
+          <button type="button" id="btn-dismiss-success">知道了</button>
+        </div>
+
         <div class="topup-info-banner">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
             <circle cx="12" cy="12" r="10"/>
@@ -1583,7 +1640,7 @@ body {
 <script>
 // ─── Toast ──────────────────────────────────────────────────────────
 let toastTimer = null
-function showToast(msg, type = '') {
+function showToast(msg, type = '', duration = 3000) {
   const el = document.getElementById('toast')
   el.textContent = msg
   el.className = ''
@@ -1591,7 +1648,7 @@ function showToast(msg, type = '') {
   void el.offsetWidth
   el.classList.add('show')
   clearTimeout(toastTimer)
-  toastTimer = setTimeout(() => el.classList.remove('show'), 3000)
+  toastTimer = setTimeout(() => el.classList.remove('show'), duration)
 }
 
 // ─── 路由（切页） ──────────────────────────────────────────────────
@@ -2172,16 +2229,35 @@ async function refreshBalance({ silent = true } = {}) {
     const callEl = document.getElementById('topup-can-call')
     if (callEl) callEl.textContent = `约 ${callEst.toLocaleString()} 次`
 
-    // 到账检测：余额增加 → toast 提示
+    // 到账检测：余额增加 → 持久 banner + 长时间 toast
     if (_lastQuota != null && user.quota > _lastQuota) {
       const delta = rmbFromQuota(user.quota - _lastQuota)
-      showToast(`到账 +¥${delta}`, 'success')
+      showTopupSuccess(delta, balance)
     }
     _lastQuota = user.quota
   } catch (e) {
     console.error('[balance] refresh error:', e)
   }
 }
+
+function showTopupSuccess(deltaRmb, balanceRmb) {
+  // Toast 长时显示（8 秒）
+  showToast(`充值成功！到账 ¥${deltaRmb}，当前余额 ¥${balanceRmb}`, 'success', 8000)
+  // 持久 banner（直到用户点「知道了」）
+  const banner = document.getElementById('topup-success-banner')
+  if (banner) {
+    banner.classList.add('show')
+    document.getElementById('topup-success-title').textContent = `充值成功 +¥${deltaRmb} 🎉`
+    document.getElementById('topup-success-sub').textContent = `当前余额 ¥${balanceRmb}`
+  }
+  // 自动切到"模型充值"页，方便用户看到 banner 确认
+  switchPage('topup')
+}
+
+const _btnDismissSuccess = document.getElementById('btn-dismiss-success')
+if (_btnDismissSuccess) _btnDismissSuccess.addEventListener('click', () => {
+  document.getElementById('topup-success-banner').classList.remove('show')
+})
 
 function renderPlans() {
   const grid = document.getElementById('plans-grid')
@@ -2368,6 +2444,12 @@ document.getElementById('btn-redeem').addEventListener('click', async () => {
   setInterval(refreshGatewayStatus, 5000)
   // 每 30 秒刷新一次余额（被动更新）
   setInterval(refreshBalance, 30000)
+
+  // 窗口切换回可见时立刻刷新（用户从浏览器付完钱回来的关键路径）
+  document.addEventListener('visibilitychange', () => {
+    if (!document.hidden) refreshBalance()
+  })
+  window.addEventListener('focus', () => refreshBalance())
 })()
 </script>
 </body>
