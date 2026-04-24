@@ -1294,6 +1294,8 @@ async function syncAgentAuth(cfg, key, provider) {
       ap.lastGood = ap.lastGood || {}
       ap.lastGood[providerKey] = `${providerKey}:default`
       await fs.promises.writeFile(authPath, JSON.stringify(ap, null, 2), 'utf8')
+      // POSIX 下限本用户读写；Windows 静默 no-op（需 ACL，Electron 不暴露）
+      try { await fs.promises.chmod(authPath, 0o600) } catch {}
     } catch (e) {
       console.warn('[syncAgentAuth] auth-profiles.json failed:', e.message)
     }

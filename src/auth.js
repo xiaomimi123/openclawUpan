@@ -74,6 +74,8 @@ class AuthManager {
     }
     await fs.promises.mkdir(path.dirname(this.authPath), { recursive: true })
     await fs.promises.writeFile(this.authPath, JSON.stringify(body, null, 2), 'utf8')
+    // POSIX 下限本用户读写；FAT32/exFAT（U 盘常见格式）不支持 POSIX 权限 → 静默失败不影响
+    try { await fs.promises.chmod(this.authPath, 0o600) } catch {}
     this.state.savedAt = body.saved_at
   }
 

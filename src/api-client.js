@@ -243,7 +243,13 @@ class ApiClient {
 // Response.headers.get('set-cookie') 在 Node fetch 里只会返回第一条（合并的）；
 // 多个 Set-Cookie 需要 .getSetCookie() 或 raw headers。我们只关心 session=xxx，用字符串匹配足够。
 
+// 调试日志：默认关闭；开启后也 mask 敏感值避免 session 泄漏
 const DEBUG_COOKIE = process.env.OPENCLAW_DEBUG_COOKIE === '1'
+function maskForDebug(v) {
+  if (!v) return v
+  const s = String(v)
+  return s.length <= 10 ? s : s.slice(0, 8) + '***(' + s.length + 'chars)'
+}
 
 function pickSetCookie(headers) {
   if (!headers) {
@@ -253,8 +259,8 @@ function pickSetCookie(headers) {
   // Node 20+: headers.getSetCookie() 返回数组
   if (typeof headers.getSetCookie === 'function') {
     const arr = headers.getSetCookie()
-    if (DEBUG_COOKIE) console.log('[cookie-debug] getSetCookie():', JSON.stringify(arr))
-    if (arr && arr.length) return arr.join('\n')  // 用换行隔开避免被 Expires 里的逗号搞乱
+    if (DEBUG_COOKIE) console.log('[cookie-debug] getSetCookie() count=', arr?.length || 0, 'samples=', (arr || []).map(maskForDebug))
+    if (arr && arr.length) return arr.join('\n')
   }
   // entries() 遍历（兼容 Chromium fetch 的 Headers）
   if (typeof headers.entries === 'function') {
@@ -262,25 +268,26 @@ function pickSetCookie(headers) {
     for (const [k, v] of headers.entries()) {
       if (k.toLowerCase() === 'set-cookie') pieces.push(v)
     }
-    if (DEBUG_COOKIE) console.log('[cookie-debug] entries set-cookie pieces:', pieces)
+    if (DEBUG_COOKIE) console.log('[cookie-debug] entries set-cookie count=', pieces.length, 'samples=', pieces.map(maskForDebug))
     if (pieces.length) return pieces.join('\n')
   }
   // get('set-cookie') 回退
   if (typeof headers.get === 'function') {
     const v = headers.get('set-cookie')
-    if (DEBUG_COOKIE) console.log('[cookie-debug] get(set-cookie):', v)
+    if (DEBUG_COOKIE) console.log('[cookie-debug] get(set-cookie):', maskForDebug(v))
     if (v) return v
   }
   // 最终回退：直接读属性（mock/特殊对象）
   const raw = headers['set-cookie'] || null
-  if (DEBUG_COOKIE) console.log('[cookie-debug] raw[set-cookie]:', raw)
+  if (DEBUG_COOKIE) console.log('[cookie-debug] raw[set-cookie]:', maskForDebug(raw))
   return raw
 }
 
 function extractSessionCookie(setCookieStr) {
   if (!setCookieStr) return null
-  // 匹配 "session=<value>"，遇 ; 或 , 终止
-  const m = setCookieStr.match(/(?:^|[;, ])session=([^;,]+)/i)
+  // 匹配 "session=<value>"：只允许 cookie 值合法字符（不含空白/控制字符/分号/逗号）
+  // 防止畸形/恶意 Set-Cookie 把换行注入 auth.json
+  const m = setCookieStr.match(/(?:^|[;, ])session=([A-Za-z0-9!#$%&'()*+\-./:<=>?@\[\]^_`{|}~]+)/i)
   if (!m) return null
   return 'session=' + m[1]
 }
