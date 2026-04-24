@@ -2459,17 +2459,15 @@ async function refreshGatewayStatus() {
     const s = await window.usb.getOpenclawStatus()
     gw.startedAt = s.startedAt || null
     gw.port = s.port || 18789
-    if (s.running) {
-      if (gw.status !== 'starting') gw.status = 'running'
-    } else {
-      if (gw.status !== 'starting' && gw.status !== 'stopping') gw.status = 'stopped'
-    }
+    gw.status = s.running ? 'running' : 'stopped'
     setGatewayUI()
   } catch {}
 }
 
 async function onStartGateway() {
-  if (gw.status === 'running' || gw.status === 'starting') {
+  // 过渡态点击忽略，防止双击中断 spawn
+  if (gw.status === 'starting' || gw.status === 'stopping') return
+  if (gw.status === 'running') {
     await onStopGateway()
     return
   }
@@ -2485,7 +2483,7 @@ async function onStartGateway() {
       document.getElementById('gateway-log').classList.remove('collapsed')
       return
     }
-    // 启动成功后轮询确认运行中
+    // 主进程确认 spawn 成功 → 直接拉真实状态（这次不会被 starting 卡住）
     await refreshGatewayStatus()
   } catch (e) {
     showToast('启动异常: ' + e.message, 'error')
@@ -3458,8 +3456,10 @@ document.getElementById('sidebar-menu').addEventListener('click', (e) => {
       setGatewayUI()
     }
   }, 1000)
-  // 每 5 秒同步一次 Gateway 状态
-  setInterval(refreshGatewayStatus, 5000)
+  // 每 5 秒同步一次 Gateway 状态（过渡期跳过，避免覆盖 onStart/onStop 正在进行的状态）
+  setInterval(() => {
+    if (gw.status !== 'starting' && gw.status !== 'stopping') refreshGatewayStatus()
+  }, 5000)
   // 每 30 秒刷新一次余额（被动更新）
   setInterval(refreshBalance, 30000)
 
