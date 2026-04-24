@@ -945,6 +945,162 @@ body {
 .topup-sub .label { opacity: 0.7; }
 .topup-sub .value { margin-left: 6px; }
 
+/* ─── 聊天工具页 ─── */
+.chat-tabs {
+  display: inline-flex;
+  background: var(--bg-card);
+  border: 1px solid var(--border-subtle);
+  border-radius: 8px;
+  padding: 3px;
+  margin-bottom: 22px;
+}
+.chat-tab {
+  padding: 8px 22px;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-muted);
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s;
+  user-select: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+.chat-tab.active {
+  background: var(--bg-elevated);
+  color: var(--text-primary);
+  box-shadow: 0 1px 2px rgba(0,0,0,0.2);
+}
+
+.chat-panel { display: none; }
+.chat-panel.active { display: block; }
+
+.plugin-install-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border-subtle);
+  border-radius: 12px;
+  padding: 32px;
+  max-width: 720px;
+  margin: 0 auto;
+  text-align: center;
+  position: relative;
+}
+.plugin-install-icon {
+  width: 72px; height: 72px;
+  border-radius: 18px;
+  background: var(--brand-dim);
+  color: var(--brand);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 18px;
+}
+.plugin-title {
+  font-family: var(--font-display);
+  font-size: 22px;
+  font-weight: 500;
+  margin-bottom: 8px;
+}
+.plugin-subtitle {
+  font-size: 13px;
+  color: var(--text-muted);
+  line-height: 1.7;
+  max-width: 560px;
+  margin: 0 auto 24px;
+}
+.plugin-steps {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  max-width: 480px;
+  margin: 0 auto 24px;
+  text-align: left;
+}
+.plugin-step {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px;
+  background: var(--bg-input);
+  border: 1px solid var(--border-subtle);
+  border-radius: 8px;
+  font-size: 13px;
+  color: var(--text-secondary);
+}
+.plugin-step-num {
+  width: 24px; height: 24px;
+  border-radius: 50%;
+  background: var(--brand);
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+.btn-install {
+  padding: 12px 28px;
+  background: var(--brand);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  transition: all 0.15s;
+}
+.btn-install:hover:not(:disabled) {
+  background: var(--brand-hover);
+  box-shadow: 0 4px 14px var(--brand-glow);
+}
+.btn-install:disabled { opacity: 0.6; cursor: not-allowed; }
+.btn-install.installed {
+  background: var(--success-dim);
+  color: var(--success);
+  border: 1px solid var(--success);
+}
+.btn-install.installed:hover { background: rgba(74, 222, 128, 0.18); }
+.plugin-hint {
+  display: flex;
+  gap: 10px;
+  margin-top: 20px;
+  padding: 12px 14px;
+  background: rgba(96, 165, 250, 0.06);
+  border: 1px solid rgba(96, 165, 250, 0.2);
+  border-radius: 8px;
+  color: var(--info);
+  font-size: 11px;
+  line-height: 1.6;
+  text-align: left;
+  max-width: 560px;
+  margin-left: auto;
+  margin-right: auto;
+}
+.plugin-status-chip {
+  position: absolute;
+  top: 20px; right: 20px;
+  padding: 4px 10px;
+  border-radius: 4px;
+  font-size: 10px;
+  font-family: var(--font-mono);
+  font-weight: 600;
+  letter-spacing: 0.08em;
+}
+.plugin-status-chip.installed {
+  background: var(--success-dim);
+  color: var(--success);
+}
+.plugin-status-chip.builtin {
+  background: var(--brand-dim);
+  color: var(--brand);
+}
+
 /* 到账成功 banner（手动关闭） */
 .topup-success-banner {
   display: none;
@@ -1563,10 +1719,108 @@ body {
       </div>
 
       <div class="page-view" id="page-chat">
-        <div class="empty-state">
-          <div class="icon"><svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg></div>
-          <div class="title">聊天工具</div>
-          <div class="desc">微信 / Telegram / 飞书 插件安装。下一步实现。</div>
+        <div class="models-header">
+          <div class="title">聊天工具接入</div>
+          <div class="subtitle">把 AI 塞进你常用的聊天工具，扫码或一键安装即可自动回复</div>
+        </div>
+
+        <div class="chat-tabs" id="chat-tabs">
+          <div class="chat-tab active" data-tab="weixin">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="#2CB034"><circle cx="12" cy="12" r="10"/></svg>
+            微信
+          </div>
+          <div class="chat-tab" data-tab="telegram">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="#229ED9"><circle cx="12" cy="12" r="10"/></svg>
+            Telegram
+          </div>
+          <div class="chat-tab" data-tab="feishu">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="#00D6B9"><circle cx="12" cy="12" r="10"/></svg>
+            飞书
+          </div>
+        </div>
+
+        <!-- 微信 -->
+        <div class="chat-panel active" id="chat-panel-weixin">
+          <div class="plugin-install-card">
+            <div class="plugin-status-chip" id="weixin-status">未安装</div>
+            <div class="plugin-install-icon">
+              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+            </div>
+            <div class="plugin-title">一键安装 微信插件</div>
+            <div class="plugin-subtitle">安装后扫码连接微信，让 AI 在你的聊天中自动回复消息。建议使用小号，避免主号风险。</div>
+
+            <div class="plugin-steps">
+              <div class="plugin-step"><div class="plugin-step-num">1</div><div>点击"开始安装"，自动下载微信插件</div></div>
+              <div class="plugin-step"><div class="plugin-step-num">2</div><div>安装完成后，在 openclaw CLI 里执行启动命令显示二维码</div></div>
+              <div class="plugin-step"><div class="plugin-step-num">3</div><div>用手机微信扫码即可连接，完成后即可对话</div></div>
+            </div>
+
+            <button class="btn-install" id="btn-install-weixin">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+              <span>开始安装</span>
+            </button>
+
+            <div class="plugin-hint">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" style="flex-shrink:0"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+              <span>在微信里 @AI 或私信即可对话。断开后需重新扫码。所有对话按 Token 消耗从账户余额扣费。</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Telegram -->
+        <div class="chat-panel" id="chat-panel-telegram">
+          <div class="plugin-install-card">
+            <div class="plugin-status-chip builtin">已内置</div>
+            <div class="plugin-install-icon" style="color:#229ED9;background:rgba(34,158,217,0.12)">
+              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M22 2L11 13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+            </div>
+            <div class="plugin-title">Telegram 已内置</div>
+            <div class="plugin-subtitle">OpenClaw 原生支持 Telegram，无需额外安装插件。按下面步骤配置 Bot Token 即可使用。</div>
+
+            <div class="plugin-steps">
+              <div class="plugin-step"><div class="plugin-step-num">1</div><div>在 Telegram 里找 <b>@BotFather</b>，发 <code>/newbot</code> 创建一个 Bot</div></div>
+              <div class="plugin-step"><div class="plugin-step-num">2</div><div>把 BotFather 返回的 <b>Bot Token</b> 复制到 openclaw.json 的 <code>telegram.botToken</code> 字段</div></div>
+              <div class="plugin-step"><div class="plugin-step-num">3</div><div>重启 Gateway，在 Telegram 里和你的 Bot 对话即可</div></div>
+            </div>
+
+            <button class="btn-install" id="btn-telegram-docs" style="background:transparent;color:var(--text-secondary);border:1px solid var(--border-default)">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+              <span>查看配置文档</span>
+            </button>
+
+            <div class="plugin-hint">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" style="flex-shrink:0"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+              <span>Bot Token 是敏感凭据，请勿截图分享。如不慎泄露，立即在 @BotFather 用 <code>/revoke</code> 吊销。</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- 飞书 -->
+        <div class="chat-panel" id="chat-panel-feishu">
+          <div class="plugin-install-card">
+            <div class="plugin-status-chip" id="feishu-status">未安装</div>
+            <div class="plugin-install-icon" style="color:#00D6B9;background:rgba(0,214,185,0.12)">
+              <svg width="28" height="28" viewBox="0 0 24 24" fill="currentColor"><path d="M4 4h16v12H6l-2 2V4z"/></svg>
+            </div>
+            <div class="plugin-title">飞书插件</div>
+            <div class="plugin-subtitle">在飞书应用里调用 AI，支持群聊 @ 与私聊。需要在飞书开放平台创建自建应用并拿到 App ID / App Secret。</div>
+
+            <div class="plugin-steps">
+              <div class="plugin-step"><div class="plugin-step-num">1</div><div>点击"开始安装"，自动下载并运行飞书 onboard-cli</div></div>
+              <div class="plugin-step"><div class="plugin-step-num">2</div><div>按终端提示填入 App ID / App Secret（飞书开放平台可查）</div></div>
+              <div class="plugin-step"><div class="plugin-step-num">3</div><div>完成后在飞书应用里即可 @ 你的 AI 对话</div></div>
+            </div>
+
+            <button class="btn-install" id="btn-install-feishu">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+              <span>开始安装</span>
+            </button>
+
+            <div class="plugin-hint">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" style="flex-shrink:0"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+              <span>安装过程会打开一个终端窗口用于输入配置。如果没弹出，检查系统是否允许启动器开子窗口。</span>
+            </div>
+          </div>
         </div>
       </div>
 
@@ -2426,6 +2680,102 @@ document.getElementById('btn-redeem').addEventListener('click', async () => {
     btn.disabled = false
     btn.textContent = '兑换'
   }
+})
+
+// ─── 聊天工具页 ─────────────────────────────────────────────────────
+const chatPage = { loaded: false }
+
+function setPluginStatus(chipId, installed, label) {
+  const chip = document.getElementById(chipId)
+  if (!chip) return
+  chip.classList.toggle('installed', !!installed)
+  chip.textContent = label || (installed ? '已安装' : '未安装')
+}
+
+function setInstallBtn(btnId, { installed = false, loading = false, text } = {}) {
+  const btn = document.getElementById(btnId)
+  if (!btn) return
+  btn.disabled = loading
+  btn.classList.toggle('installed', !!installed && !loading)
+  const span = btn.querySelector('span')
+  if (span) span.textContent = text || (loading ? '安装中...' : installed ? '已安装（点击重装）' : '开始安装')
+}
+
+async function refreshPluginStatus() {
+  try {
+    const r1 = await window.usb.checkSkillInstalled('openclaw-weixin')
+    setPluginStatus('weixin-status', r1?.installed, r1?.installed ? '已安装' : '未安装')
+    setInstallBtn('btn-install-weixin', { installed: !!r1?.installed })
+  } catch {}
+  try {
+    const r2 = await window.usb.checkSkillInstalled('feishu-openclaw-plugin')
+    setPluginStatus('feishu-status', r2?.installed, r2?.installed ? '已安装' : '未安装')
+    setInstallBtn('btn-install-feishu', { installed: !!r2?.installed })
+  } catch {}
+}
+
+async function loadChatPage() {
+  if (!chatPage.loaded) {
+    chatPage.loaded = true
+  }
+  await refreshPluginStatus()
+}
+
+document.getElementById('chat-tabs').addEventListener('click', (e) => {
+  const tab = e.target.closest('.chat-tab')
+  if (!tab) return
+  document.querySelectorAll('.chat-tab').forEach(t => t.classList.remove('active'))
+  tab.classList.add('active')
+  document.querySelectorAll('.chat-panel').forEach(p => p.classList.remove('active'))
+  document.getElementById('chat-panel-' + tab.dataset.tab).classList.add('active')
+})
+
+// 进入聊天工具页自动检测状态
+document.getElementById('sidebar-menu').addEventListener('click', (e) => {
+  const mi = e.target.closest('.menu-item')
+  if (mi && mi.dataset.page === 'chat') loadChatPage()
+})
+
+// 微信安装
+document.getElementById('btn-install-weixin').addEventListener('click', async () => {
+  const btn = document.getElementById('btn-install-weixin')
+  setInstallBtn('btn-install-weixin', { loading: true })
+  try {
+    const r = await window.usb.installSkill(['openclaw', 'plugins', 'install', '@tencent-weixin/openclaw-weixin@2.1.8'])
+    if (r && r.ok) {
+      showToast('微信插件安装成功', 'success')
+      await refreshPluginStatus()
+    } else {
+      showToast('安装失败: ' + (r?.error || '未知错误'), 'error')
+      setInstallBtn('btn-install-weixin', { loading: false })
+    }
+  } catch (e) {
+    showToast('安装异常: ' + e.message, 'error')
+    setInstallBtn('btn-install-weixin', { loading: false })
+  }
+})
+
+// 飞书安装
+document.getElementById('btn-install-feishu').addEventListener('click', async () => {
+  setInstallBtn('btn-install-feishu', { loading: true })
+  try {
+    const r = await window.usb.installFeishuPlugin()
+    if (r && r.ok) {
+      showToast('飞书插件安装已启动，请在终端窗口完成配置', 'success', 6000)
+      await refreshPluginStatus()
+    } else {
+      showToast('安装失败: ' + (r?.error || '未知错误'), 'error')
+      setInstallBtn('btn-install-feishu', { loading: false })
+    }
+  } catch (e) {
+    showToast('安装异常: ' + e.message, 'error')
+    setInstallBtn('btn-install-feishu', { loading: false })
+  }
+})
+
+// Telegram 文档链接
+document.getElementById('btn-telegram-docs').addEventListener('click', () => {
+  window.usb.openExternal('https://core.telegram.org/bots#how-do-i-create-a-bot')
 })
 
 // ─── 初始化 ────────────────────────────────────────────────────────
