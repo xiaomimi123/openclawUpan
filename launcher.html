@@ -2625,10 +2625,9 @@ const modelsPage = {
 
 function maskToken(key) {
   if (!key) return ''
-  const full = 'sk-' + key
-  if (modelsPage.tokenVisible) return full
-  if (full.length <= 14) return full
-  return full.slice(0, 6) + '••••••••••' + full.slice(-6)
+  if (modelsPage.tokenVisible) return key
+  if (key.length <= 14) return key
+  return key.slice(0, 6) + '••••••••••' + key.slice(-6)
 }
 
 function renderTokenCard() {
@@ -2740,7 +2739,7 @@ document.getElementById('btn-toggle-key').addEventListener('click', () => {
 document.getElementById('btn-copy-key').addEventListener('click', () => {
   const t = modelsPage.tokenRecord
   if (!t) { showToast('暂无 API Key', 'error'); return }
-  navigator.clipboard.writeText('sk-' + t.key).then(
+  navigator.clipboard.writeText(t.key).then(
     () => showToast('已复制 API Key', 'success'),
     () => showToast('复制失败', 'error')
   )
@@ -2766,7 +2765,7 @@ document.getElementById('btn-save-official').addEventListener('click', async () 
   btn.disabled = true
   btn.textContent = '保存中...'
   try {
-    const r = await window.usb.updateApiKey('sk-' + t.key, 'custom', {
+    const r = await window.usb.updateApiKey(t.key, 'custom', {
       baseUrl: 'https://aitoken.homes/v1',
       modelId: modelId,
     })

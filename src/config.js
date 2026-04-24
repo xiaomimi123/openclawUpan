@@ -106,7 +106,12 @@ function applyProviderConfig(cfg, provider, key, opts = {}) {
         baseUrl: opts.baseUrl,
         models: [baseModelEntry(opts.modelId || 'custom-model', opts.modelName || '自定义模型')]
       }
-      cfg.agents.defaults.model = { primary: 'openai/' + (opts.modelId || 'custom-model') }
+      const modelRef = 'openai/' + (opts.modelId || 'custom-model')
+      cfg.agents.defaults.model = { primary: modelRef }
+      // 也把 subagent 的模型指向同一个，否则 openclaw 子 agent 默认回退到 anthropic，
+      // 在没有 anthropic key 时启动聊天就报 "No API key found for provider 'anthropic'"
+      if (!cfg.agents.defaults.subagents) cfg.agents.defaults.subagents = {}
+      cfg.agents.defaults.subagents.model = modelRef
       break
     }
 

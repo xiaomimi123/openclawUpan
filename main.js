@@ -1293,11 +1293,61 @@ ipcMain.handle('update-api-key', async (_, payload) => {
     }
     await fs.promises.writeFile(setupFile, JSON.stringify(setup, null, 2), 'utf8')
 
+    // 同步到 agent 的 models.json + auth-profiles.json（openclaw 子 agent 直接读这两个，
+    // 不会自动从 openclaw.json 再读一次；不同步的话用户保存了新 key 也没生效）
+    try {
+      await syncAgentAuth(cfg, newKey, provider)
+    } catch (e) {
+      console.warn('[update-api-key] syncAgentAuth failed:', e.message)
+    }
+
     return { ok: true, provider }
   } catch (e) {
     return { ok: false, error: e.message }
   }
 })
+
+// 把最新 key 同步到 agents/main/agent/{models.json, auth-profiles.json}
+async function syncAgentAuth(cfg, key, provider) {
+  const agentDir = path.join(configDir, 'agents', 'main', 'agent')
+  if (!fs.existsSync(agentDir)) return  // 首次启动 openclaw 之前，agent 目录还没创建
+
+  // 灵境/自定义/openai 类通通归一到 "openai" provider
+  const providerKey = (provider === 'anthropic') ? 'anthropic' : 'openai'
+
+  // ① models.json
+  const modelsPath = path.join(agentDir, 'models.json')
+  if (fs.existsSync(modelsPath)) {
+    try {
+      const m = JSON.parse(await fs.promises.readFile(modelsPath, 'utf8'))
+      m.providers = m.providers || {}
+      const src = cfg.models?.providers?.[providerKey]
+      if (src) m.providers[providerKey] = { ...src }
+      await fs.promises.writeFile(modelsPath, JSON.stringify(m, null, 2), 'utf8')
+    } catch (e) {
+      console.warn('[syncAgentAuth] models.json failed:', e.message)
+    }
+  }
+
+  // ② auth-profiles.json
+  const authPath = path.join(agentDir, 'auth-profiles.json')
+  if (fs.existsSync(authPath)) {
+    try {
+      const ap = JSON.parse(await fs.promises.readFile(authPath, 'utf8'))
+      ap.profiles = ap.profiles || {}
+      ap.profiles[`${providerKey}:default`] = {
+        type: 'api_key',
+        provider: providerKey,
+        key,
+      }
+      ap.lastGood = ap.lastGood || {}
+      ap.lastGood[providerKey] = `${providerKey}:default`
+      await fs.promises.writeFile(authPath, JSON.stringify(ap, null, 2), 'utf8')
+    } catch (e) {
+      console.warn('[syncAgentAuth] auth-profiles.json failed:', e.message)
+    }
+  }
+}
 
 // ─── IPC: Validate API Key ────────────────────────────────────────────────
 
