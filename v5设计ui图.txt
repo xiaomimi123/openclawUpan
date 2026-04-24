@@ -1,0 +1,3196 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>OpenClaw v5 · UI 设计稿</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;0,9..144,700;1,9..144,400&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&family=Noto+Sans+SC:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  /* 色彩系统 */
+  --bg-page: #08090D;
+  --bg-surface: #0F1218;
+  --bg-card: #151922;
+  --bg-card-hover: #1A1F2B;
+  --bg-elevated: #1D2230;
+  --bg-input: #10141C;
+
+  --border-subtle: #1F2433;
+  --border-default: #262C3B;
+  --border-strong: #323849;
+
+  --text-primary: #E8EAED;
+  --text-secondary: #A8ADBA;
+  --text-muted: #6B7080;
+  --text-subtle: #4A4F5E;
+
+  /* 品牌色 - 龙虾红 */
+  --brand: #E94B3C;
+  --brand-hover: #F15A4C;
+  --brand-dim: rgba(233, 75, 60, 0.12);
+  --brand-glow: rgba(233, 75, 60, 0.25);
+
+  /* 辅助色 */
+  --success: #4ADE80;
+  --success-dim: rgba(74, 222, 128, 0.12);
+  --warning: #FBBF24;
+  --warning-dim: rgba(251, 191, 36, 0.12);
+  --danger: #F87171;
+  --info: #60A5FA;
+
+  /* 字体 */
+  --font-display: 'Fraunces', 'Noto Sans SC', serif;
+  --font-sans: 'Plus Jakarta Sans', 'Noto Sans SC', -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-mono: 'JetBrains Mono', 'SF Mono', monospace;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html, body {
+  height: 100%;
+  overflow: hidden;
+}
+
+body {
+  font-family: var(--font-sans);
+  background: var(--bg-page);
+  color: var(--text-primary);
+  font-size: 14px;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ================== 设计稿整体布局 ================== */
+.showcase {
+  display: grid;
+  grid-template-columns: 240px 1fr;
+  height: 100vh;
+}
+
+/* 左侧导航 */
+.showcase-nav {
+  background: var(--bg-surface);
+  border-right: 1px solid var(--border-subtle);
+  padding: 32px 20px;
+  overflow-y: auto;
+}
+
+.showcase-brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 40px;
+  padding-bottom: 24px;
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.showcase-brand .logo-mark {
+  width: 32px;
+  height: 32px;
+  color: var(--brand);
+}
+
+.showcase-brand h1 {
+  font-family: var(--font-display);
+  font-size: 18px;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  color: var(--text-primary);
+}
+
+.showcase-brand .subtitle {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  margin-top: 2px;
+}
+
+.nav-section {
+  margin-bottom: 28px;
+}
+
+.nav-label {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: var(--text-muted);
+  padding: 0 10px;
+  margin-bottom: 8px;
+}
+
+.nav-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 10px;
+  border-radius: 6px;
+  color: var(--text-secondary);
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.15s;
+  margin-bottom: 2px;
+}
+
+.nav-item:hover {
+  background: var(--bg-card);
+  color: var(--text-primary);
+}
+
+.nav-item.active {
+  background: var(--brand-dim);
+  color: var(--brand);
+}
+
+.nav-item .num {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--text-muted);
+  margin-left: auto;
+}
+
+.nav-item.active .num {
+  color: var(--brand);
+}
+
+/* 主展示区 */
+.showcase-main {
+  background:
+    radial-gradient(ellipse 800px 500px at 50% 0%, rgba(233, 75, 60, 0.04), transparent),
+    var(--bg-page);
+  overflow-y: auto;
+  padding: 48px 40px;
+}
+
+.showcase-header {
+  margin-bottom: 32px;
+}
+
+.showcase-header h2 {
+  font-family: var(--font-display);
+  font-size: 32px;
+  font-weight: 500;
+  letter-spacing: -0.02em;
+  color: var(--text-primary);
+  margin-bottom: 8px;
+}
+
+.showcase-header p {
+  color: var(--text-secondary);
+  font-size: 14px;
+}
+
+.showcase-header .meta {
+  display: flex;
+  gap: 16px;
+  margin-top: 16px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
+.showcase-header .meta span {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.showcase-header .meta .dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--success);
+}
+
+/* 窗口模拟框 */
+.window-frame {
+  background: var(--bg-surface);
+  border-radius: 10px;
+  border: 1px solid var(--border-default);
+  box-shadow:
+    0 0 0 1px rgba(255,255,255,0.02),
+    0 24px 48px -12px rgba(0,0,0,0.6),
+    0 8px 24px -8px rgba(0,0,0,0.4);
+  overflow: hidden;
+  margin: 0 auto;
+}
+
+.window-titlebar {
+  height: 36px;
+  background: #0B0E14;
+  border-bottom: 1px solid var(--border-subtle);
+  display: flex;
+  align-items: center;
+  padding: 0 14px;
+  gap: 12px;
+}
+
+.window-controls {
+  display: flex;
+  gap: 8px;
+}
+
+.window-controls .dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--border-default);
+}
+
+.window-title {
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--text-muted);
+  letter-spacing: 0.02em;
+}
+
+.window-title span {
+  color: var(--text-secondary);
+}
+
+/* ================== LOGIN PAGE ================== */
+.login-container {
+  width: 480px;
+  height: 640px;
+  background:
+    radial-gradient(circle at 50% -20%, rgba(233, 75, 60, 0.08), transparent 60%),
+    var(--bg-surface);
+  position: relative;
+  overflow: hidden;
+}
+
+.login-container::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image:
+    linear-gradient(rgba(255,255,255,0.02) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255,255,255,0.02) 1px, transparent 1px);
+  background-size: 32px 32px;
+  mask-image: radial-gradient(ellipse at center, black 20%, transparent 70%);
+  pointer-events: none;
+}
+
+.login-inner {
+  position: relative;
+  padding: 56px 48px 40px;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.login-brand {
+  text-align: center;
+  margin-bottom: 48px;
+}
+
+.login-brand .logo-mark {
+  width: 48px;
+  height: 48px;
+  color: var(--brand);
+  margin: 0 auto 16px;
+  display: block;
+}
+
+.login-brand h1 {
+  font-family: var(--font-display);
+  font-size: 28px;
+  font-weight: 500;
+  letter-spacing: -0.02em;
+  margin-bottom: 4px;
+}
+
+.login-brand .version {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--text-muted);
+  letter-spacing: 0.1em;
+}
+
+.login-tabs {
+  display: flex;
+  background: var(--bg-input);
+  border: 1px solid var(--border-subtle);
+  border-radius: 8px;
+  padding: 3px;
+  margin-bottom: 24px;
+}
+
+.login-tab {
+  flex: 1;
+  padding: 8px;
+  text-align: center;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-muted);
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.login-tab.active {
+  background: var(--bg-elevated);
+  color: var(--text-primary);
+  box-shadow: 0 1px 2px rgba(0,0,0,0.2);
+}
+
+.form-field {
+  margin-bottom: 16px;
+}
+
+.form-label {
+  display: block;
+  font-size: 12px;
+  color: var(--text-secondary);
+  margin-bottom: 6px;
+  font-weight: 500;
+}
+
+.form-input {
+  width: 100%;
+  height: 44px;
+  background: var(--bg-input);
+  border: 1px solid var(--border-subtle);
+  border-radius: 8px;
+  padding: 0 14px;
+  color: var(--text-primary);
+  font-size: 14px;
+  font-family: inherit;
+  transition: all 0.15s;
+  outline: none;
+}
+
+.form-input::placeholder {
+  color: var(--text-subtle);
+}
+
+.form-input:focus {
+  border-color: var(--brand);
+  background: var(--bg-card);
+  box-shadow: 0 0 0 3px var(--brand-dim);
+}
+
+.form-help {
+  display: flex;
+  justify-content: space-between;
+  font-size: 12px;
+  margin-top: -8px;
+  margin-bottom: 20px;
+}
+
+.form-help a {
+  color: var(--text-muted);
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.form-help a:hover {
+  color: var(--text-secondary);
+}
+
+.btn-primary {
+  width: 100%;
+  height: 44px;
+  background: var(--brand);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s;
+  font-family: inherit;
+  position: relative;
+  overflow: hidden;
+}
+
+.btn-primary:hover {
+  background: var(--brand-hover);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 16px var(--brand-glow);
+}
+
+.login-divider {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 28px 0 20px;
+  color: var(--text-muted);
+  font-size: 11px;
+  font-family: var(--font-mono);
+  letter-spacing: 0.1em;
+}
+
+.login-divider::before,
+.login-divider::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: var(--border-subtle);
+}
+
+.login-gift {
+  background: linear-gradient(135deg, rgba(233, 75, 60, 0.08), rgba(233, 75, 60, 0.02));
+  border: 1px solid rgba(233, 75, 60, 0.2);
+  border-radius: 10px;
+  padding: 16px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.login-gift .icon {
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
+  background: var(--brand);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  flex-shrink: 0;
+}
+
+.login-gift .content {
+  flex: 1;
+}
+
+.login-gift .title {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: 2px;
+}
+
+.login-gift .desc {
+  font-size: 11px;
+  color: var(--text-secondary);
+}
+
+.login-footer {
+  margin-top: auto;
+  padding-top: 24px;
+  display: flex;
+  justify-content: center;
+  gap: 24px;
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
+.login-footer a {
+  color: var(--text-muted);
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.login-footer a:hover {
+  color: var(--text-secondary);
+}
+
+/* ================== LAUNCHER (MAIN WINDOW) ================== */
+.launcher-container {
+  width: 1180px;
+  height: 740px;
+  display: grid;
+  grid-template-columns: 220px 1fr;
+  background: var(--bg-page);
+}
+
+/* 左侧 Sidebar */
+.sidebar {
+  background: var(--bg-surface);
+  border-right: 1px solid var(--border-subtle);
+  display: flex;
+  flex-direction: column;
+  padding: 20px 12px 16px;
+}
+
+.sidebar-brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 4px 10px 20px;
+  margin-bottom: 12px;
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.sidebar-brand .logo-mark {
+  width: 24px;
+  height: 24px;
+  color: var(--brand);
+}
+
+.sidebar-brand .name {
+  font-family: var(--font-display);
+  font-size: 16px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+
+.sidebar-brand .version {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  color: var(--text-muted);
+  letter-spacing: 0.1em;
+  margin-top: 1px;
+}
+
+.sidebar-menu {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.menu-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 10px;
+  border-radius: 6px;
+  color: var(--text-secondary);
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.12s;
+  position: relative;
+}
+
+.menu-item:hover {
+  background: var(--bg-card);
+  color: var(--text-primary);
+}
+
+.menu-item.active {
+  background: var(--bg-card);
+  color: var(--text-primary);
+}
+
+.menu-item.active::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 3px;
+  height: 18px;
+  background: var(--brand);
+  border-radius: 0 2px 2px 0;
+}
+
+.menu-item svg {
+  width: 16px;
+  height: 16px;
+  color: var(--text-muted);
+  flex-shrink: 0;
+}
+
+.menu-item.active svg {
+  color: var(--brand);
+}
+
+.sidebar-footer {
+  padding-top: 12px;
+  border-top: 1px solid var(--border-subtle);
+}
+
+.sidebar-gateway-btn {
+  width: 100%;
+  background: linear-gradient(180deg, #2D9B5F, #268052);
+  color: white;
+  border: 1px solid #3AAE70;
+  border-radius: 8px;
+  padding: 10px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  transition: all 0.15s;
+  font-family: inherit;
+}
+
+.sidebar-gateway-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(45, 155, 95, 0.3);
+}
+
+.sidebar-gateway-btn.stop {
+  background: linear-gradient(180deg, #2A2F3E, #1F232F);
+  border-color: var(--border-default);
+  color: var(--text-primary);
+}
+
+/* 主内容区 */
+.main-area {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  background: var(--bg-page);
+}
+
+/* 顶栏 */
+.topbar {
+  height: 56px;
+  padding: 0 24px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid var(--border-subtle);
+  background: var(--bg-page);
+}
+
+.topbar-title {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.topbar-title h3 {
+  font-family: var(--font-display);
+  font-size: 17px;
+  font-weight: 500;
+  letter-spacing: -0.01em;
+}
+
+.topbar-badge {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  padding: 3px 8px;
+  border-radius: 4px;
+  letter-spacing: 0.05em;
+  border: 1px solid var(--border-default);
+  color: var(--text-muted);
+}
+
+.topbar-badge.live {
+  border-color: rgba(74, 222, 128, 0.3);
+  color: var(--success);
+  background: var(--success-dim);
+}
+
+.topbar-right {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.balance-display {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 7px 14px;
+  background: var(--bg-card);
+  border: 1px solid var(--border-subtle);
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.balance-display:hover {
+  border-color: var(--border-default);
+  background: var(--bg-card-hover);
+}
+
+.balance-display .label {
+  font-size: 11px;
+  color: var(--text-muted);
+  font-family: var(--font-mono);
+  letter-spacing: 0.05em;
+}
+
+.balance-display .amount {
+  font-family: var(--font-display);
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--text-primary);
+  letter-spacing: -0.01em;
+}
+
+.balance-display .amount .currency {
+  font-size: 11px;
+  color: var(--text-muted);
+  margin-right: 2px;
+}
+
+.balance-display .topup-btn {
+  font-size: 11px;
+  color: var(--brand);
+  background: var(--brand-dim);
+  padding: 3px 8px;
+  border-radius: 4px;
+  font-weight: 600;
+}
+
+.user-avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--brand), #B8342A);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-size: 13px;
+  font-weight: 600;
+  font-family: var(--font-display);
+  cursor: pointer;
+  border: 2px solid var(--border-subtle);
+}
+
+/* 内容滚动区 */
+.content-area {
+  flex: 1;
+  overflow-y: auto;
+  padding: 24px 28px;
+}
+
+/* ========== 首页 - Gateway 控制 ========== */
+.gateway-hero {
+  background:
+    linear-gradient(135deg, rgba(233, 75, 60, 0.04), transparent 60%),
+    var(--bg-card);
+  border: 1px solid var(--border-subtle);
+  border-radius: 12px;
+  padding: 24px 28px;
+  margin-bottom: 20px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  position: relative;
+  overflow: hidden;
+}
+
+.gateway-hero::after {
+  content: '';
+  position: absolute;
+  top: -50%;
+  right: -10%;
+  width: 400px;
+  height: 400px;
+  background: radial-gradient(circle, rgba(233, 75, 60, 0.05), transparent 70%);
+  pointer-events: none;
+}
+
+.gateway-hero-left {
+  position: relative;
+  z-index: 1;
+}
+
+.gateway-hero-label {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.15em;
+  margin-bottom: 8px;
+}
+
+.gateway-hero-title {
+  font-family: var(--font-display);
+  font-size: 28px;
+  font-weight: 500;
+  letter-spacing: -0.02em;
+  margin-bottom: 6px;
+}
+
+.gateway-hero-status {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  color: var(--text-secondary);
+}
+
+.gateway-hero-status .status-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--text-muted);
+}
+
+.gateway-hero-status.running .status-dot {
+  background: var(--success);
+  box-shadow: 0 0 0 3px var(--success-dim);
+  animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { box-shadow: 0 0 0 3px var(--success-dim); }
+  50% { box-shadow: 0 0 0 6px rgba(74, 222, 128, 0.05); }
+}
+
+.gateway-hero-right {
+  display: flex;
+  gap: 10px;
+  position: relative;
+  z-index: 1;
+}
+
+.btn-repair {
+  padding: 10px 20px;
+  background: transparent;
+  border: 1px solid var(--border-default);
+  border-radius: 8px;
+  color: var(--text-secondary);
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.15s;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-family: inherit;
+}
+
+.btn-repair:hover {
+  border-color: var(--danger);
+  color: var(--danger);
+}
+
+.btn-launch {
+  padding: 10px 28px;
+  background: var(--brand);
+  border: 1px solid var(--brand);
+  border-radius: 8px;
+  color: white;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-family: inherit;
+}
+
+.btn-launch:hover {
+  background: var(--brand-hover);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 16px var(--brand-glow);
+}
+
+/* 状态网格 */
+.status-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.status-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border-subtle);
+  border-radius: 10px;
+  padding: 16px;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.status-card:hover {
+  border-color: var(--border-default);
+  background: var(--bg-card-hover);
+  transform: translateY(-1px);
+}
+
+.status-card-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+
+.status-icon {
+  width: 28px;
+  height: 28px;
+  border-radius: 7px;
+  background: var(--success-dim);
+  color: var(--success);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.status-card.warn .status-icon {
+  background: var(--warning-dim);
+  color: var(--warning);
+}
+
+.status-mono {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--text-muted);
+  letter-spacing: 0.05em;
+}
+
+.status-card-name {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-primary);
+  margin-bottom: 3px;
+}
+
+.status-card-value {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
+.status-card-value.ok {
+  color: var(--success);
+}
+
+/* 日志区 */
+.logs-panel {
+  background: var(--bg-card);
+  border: 1px solid var(--border-subtle);
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+.logs-head {
+  padding: 14px 18px;
+  border-bottom: 1px solid var(--border-subtle);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.logs-head-title {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.logs-head-title h4 {
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.logs-stream-indicator {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--success);
+}
+
+.logs-stream-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--success);
+  animation: pulse 2s infinite;
+}
+
+.logs-clear {
+  font-size: 11px;
+  color: var(--text-muted);
+  cursor: pointer;
+  font-family: var(--font-mono);
+  letter-spacing: 0.05em;
+}
+
+.logs-clear:hover {
+  color: var(--text-secondary);
+}
+
+.logs-content {
+  padding: 14px 18px;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  line-height: 1.8;
+  max-height: 200px;
+  overflow-y: auto;
+  background: var(--bg-page);
+}
+
+.log-line {
+  display: flex;
+  gap: 12px;
+}
+
+.log-time {
+  color: var(--text-subtle);
+  flex-shrink: 0;
+}
+
+.log-level {
+  width: 48px;
+  flex-shrink: 0;
+  font-weight: 500;
+}
+
+.log-level.info { color: var(--info); }
+.log-level.ok { color: var(--success); }
+.log-level.warn { color: var(--warning); }
+
+.log-text {
+  color: var(--text-secondary);
+}
+
+/* ========== 模型配置页 ========== */
+.page-header {
+  margin-bottom: 20px;
+}
+
+.page-title {
+  font-family: var(--font-display);
+  font-size: 24px;
+  font-weight: 500;
+  letter-spacing: -0.02em;
+  margin-bottom: 6px;
+}
+
+.page-subtitle {
+  font-size: 13px;
+  color: var(--text-secondary);
+}
+
+.model-tabs {
+  display: inline-flex;
+  background: var(--bg-input);
+  border: 1px solid var(--border-subtle);
+  border-radius: 8px;
+  padding: 3px;
+  margin-bottom: 20px;
+}
+
+.model-tab {
+  padding: 7px 16px;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text-muted);
+  border-radius: 5px;
+  cursor: pointer;
+  transition: all 0.15s;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.model-tab.active {
+  background: var(--bg-elevated);
+  color: var(--text-primary);
+}
+
+.model-layout {
+  display: grid;
+  grid-template-columns: 1fr 340px;
+  gap: 16px;
+}
+
+.model-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border-subtle);
+  border-radius: 12px;
+  padding: 24px;
+}
+
+.model-card-head {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  margin-bottom: 20px;
+}
+
+.model-card-icon {
+  width: 44px;
+  height: 44px;
+  border-radius: 10px;
+  background: linear-gradient(135deg, var(--brand), #B8342A);
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.model-card-title {
+  font-family: var(--font-display);
+  font-size: 18px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  margin-bottom: 2px;
+}
+
+.model-card-desc {
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+
+.model-features {
+  background: var(--bg-input);
+  border: 1px solid var(--border-subtle);
+  border-radius: 8px;
+  padding: 14px 16px;
+  margin-bottom: 20px;
+}
+
+.model-features li {
+  list-style: none;
+  font-size: 12px;
+  color: var(--text-secondary);
+  padding: 5px 0;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.model-features li::before {
+  content: '';
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: var(--brand);
+  flex-shrink: 0;
+}
+
+.key-input-group {
+  margin-bottom: 16px;
+}
+
+.key-input-wrap {
+  display: flex;
+  gap: 8px;
+}
+
+.key-input-wrap .form-input {
+  flex: 1;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  letter-spacing: 0.05em;
+}
+
+.btn-secondary {
+  height: 44px;
+  padding: 0 14px;
+  background: var(--bg-input);
+  border: 1px solid var(--border-subtle);
+  border-radius: 8px;
+  color: var(--text-secondary);
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.15s;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-family: inherit;
+}
+
+.btn-secondary:hover {
+  border-color: var(--border-default);
+  color: var(--text-primary);
+}
+
+/* 用量卡片 */
+.usage-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border-subtle);
+  border-radius: 12px;
+  padding: 22px;
+}
+
+.usage-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24px;
+}
+
+.usage-head h4 {
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.usage-refresh {
+  color: var(--text-muted);
+  font-size: 11px;
+  font-family: var(--font-mono);
+  cursor: pointer;
+}
+
+.usage-balance-label {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  margin-bottom: 8px;
+}
+
+.usage-balance {
+  font-family: var(--font-display);
+  font-size: 42px;
+  font-weight: 500;
+  color: var(--success);
+  letter-spacing: -0.03em;
+  line-height: 1;
+  margin-bottom: 4px;
+}
+
+.usage-balance .currency {
+  font-size: 20px;
+  color: var(--text-muted);
+  margin-right: 4px;
+}
+
+.usage-sub {
+  font-size: 12px;
+  color: var(--text-muted);
+  margin-bottom: 20px;
+}
+
+.usage-progress {
+  height: 4px;
+  background: var(--bg-input);
+  border-radius: 2px;
+  overflow: hidden;
+  margin-bottom: 12px;
+}
+
+.usage-progress-fill {
+  height: 100%;
+  width: 2%;
+  background: linear-gradient(90deg, var(--brand), #FF7A6B);
+  border-radius: 2px;
+}
+
+.usage-legend {
+  display: flex;
+  justify-content: space-between;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
+/* ========== 充值页 ========== */
+.topup-hero {
+  background:
+    radial-gradient(ellipse at 0% 0%, rgba(233, 75, 60, 0.1), transparent 50%),
+    var(--bg-card);
+  border: 1px solid var(--border-subtle);
+  border-radius: 12px;
+  padding: 28px;
+  margin-bottom: 20px;
+}
+
+.topup-hero-label {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.15em;
+  margin-bottom: 12px;
+}
+
+.topup-balance-row {
+  display: flex;
+  align-items: flex-end;
+  gap: 40px;
+}
+
+.topup-balance {
+  font-family: var(--font-display);
+  font-size: 54px;
+  font-weight: 500;
+  color: var(--text-primary);
+  letter-spacing: -0.03em;
+  line-height: 1;
+}
+
+.topup-balance .currency {
+  font-size: 24px;
+  color: var(--text-muted);
+  margin-right: 6px;
+}
+
+.topup-used {
+  padding-bottom: 6px;
+}
+
+.topup-used .label {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  margin-bottom: 4px;
+}
+
+.topup-used .value {
+  font-family: var(--font-display);
+  font-size: 20px;
+  color: var(--text-secondary);
+  font-weight: 500;
+}
+
+.topup-info-banner {
+  background: rgba(96, 165, 250, 0.06);
+  border: 1px solid rgba(96, 165, 250, 0.2);
+  border-radius: 10px;
+  padding: 12px 16px;
+  margin-bottom: 20px;
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+}
+
+.topup-info-banner svg {
+  color: var(--info);
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+
+.topup-info-banner p {
+  font-size: 12px;
+  color: var(--text-secondary);
+  line-height: 1.6;
+}
+
+.topup-amounts-section {
+  background: var(--bg-card);
+  border: 1px solid var(--border-subtle);
+  border-radius: 12px;
+  padding: 22px;
+  margin-bottom: 16px;
+}
+
+.topup-section-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  margin-bottom: 16px;
+}
+
+.topup-amounts-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.amount-btn {
+  background: var(--bg-input);
+  border: 1.5px solid var(--border-subtle);
+  border-radius: 10px;
+  padding: 18px;
+  cursor: pointer;
+  transition: all 0.15s;
+  text-align: center;
+  position: relative;
+  font-family: inherit;
+  color: var(--text-primary);
+}
+
+.amount-btn:hover {
+  border-color: var(--border-strong);
+  background: var(--bg-card);
+}
+
+.amount-btn.active {
+  border-color: var(--brand);
+  background: rgba(233, 75, 60, 0.05);
+}
+
+.amount-btn.active .amount-value {
+  color: var(--brand);
+}
+
+.amount-value {
+  font-family: var(--font-display);
+  font-size: 22px;
+  font-weight: 500;
+  letter-spacing: -0.01em;
+}
+
+.amount-value .currency {
+  font-size: 12px;
+  color: var(--text-muted);
+  margin-right: 2px;
+}
+
+.amount-badge {
+  position: absolute;
+  top: -8px;
+  right: 10px;
+  background: var(--brand);
+  color: white;
+  font-size: 10px;
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+}
+
+.amount-bonus {
+  font-size: 10px;
+  color: var(--success);
+  font-family: var(--font-mono);
+  margin-top: 3px;
+}
+
+.custom-amount-wrap {
+  position: relative;
+}
+
+.custom-amount-wrap input {
+  padding-left: 42px;
+}
+
+.custom-amount-prefix {
+  position: absolute;
+  left: 14px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-family: var(--font-display);
+  font-size: 15px;
+  color: var(--text-muted);
+}
+
+.payment-methods {
+  background: var(--bg-card);
+  border: 1px solid var(--border-subtle);
+  border-radius: 12px;
+  padding: 22px;
+}
+
+.payment-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.payment-option {
+  background: var(--bg-input);
+  border: 1.5px solid var(--border-subtle);
+  border-radius: 10px;
+  padding: 14px 16px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  cursor: pointer;
+  transition: all 0.15s;
+  position: relative;
+}
+
+.payment-option.active {
+  border-color: var(--brand);
+  background: rgba(233, 75, 60, 0.04);
+}
+
+.payment-option.disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.payment-icon {
+  width: 32px;
+  height: 32px;
+  border-radius: 7px;
+  background: var(--bg-elevated);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.payment-name {
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.payment-coming {
+  font-size: 10px;
+  color: var(--text-muted);
+  font-family: var(--font-mono);
+}
+
+.payment-badge {
+  position: absolute;
+  right: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 9px;
+  font-family: var(--font-mono);
+  padding: 2px 6px;
+  border-radius: 3px;
+  background: var(--bg-elevated);
+  color: var(--text-muted);
+  letter-spacing: 0.05em;
+}
+
+/* ========== 聊天工具页 ========== */
+.chat-tabs {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 20px;
+}
+
+.chat-tab {
+  padding: 10px 18px;
+  background: var(--bg-card);
+  border: 1px solid var(--border-subtle);
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all 0.15s;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.chat-tab:hover {
+  border-color: var(--border-default);
+  color: var(--text-primary);
+}
+
+.chat-tab.active {
+  background: var(--bg-elevated);
+  border-color: var(--brand);
+  color: var(--text-primary);
+}
+
+.gateway-warn {
+  background: rgba(251, 191, 36, 0.06);
+  border: 1px solid rgba(251, 191, 36, 0.3);
+  border-radius: 10px;
+  padding: 12px 16px;
+  margin-bottom: 20px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: var(--warning);
+  font-size: 12px;
+}
+
+.plugin-install-card {
+  background:
+    radial-gradient(ellipse at 50% 0%, rgba(233, 75, 60, 0.04), transparent 50%),
+    var(--bg-card);
+  border: 1px solid var(--border-subtle);
+  border-radius: 12px;
+  padding: 40px 32px;
+  text-align: center;
+  position: relative;
+  overflow: hidden;
+}
+
+.plugin-install-icon {
+  width: 64px;
+  height: 64px;
+  margin: 0 auto 20px;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-default);
+  border-radius: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--brand);
+}
+
+.plugin-title {
+  font-family: var(--font-display);
+  font-size: 22px;
+  font-weight: 500;
+  letter-spacing: -0.02em;
+  margin-bottom: 8px;
+}
+
+.plugin-subtitle {
+  font-size: 13px;
+  color: var(--text-secondary);
+  margin-bottom: 28px;
+  max-width: 380px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.plugin-steps {
+  max-width: 320px;
+  margin: 0 auto 28px;
+  text-align: left;
+  background: var(--bg-input);
+  border: 1px solid var(--border-subtle);
+  border-radius: 10px;
+  padding: 16px 20px;
+}
+
+.plugin-step {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 6px 0;
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+
+.plugin-step-num {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: var(--brand-dim);
+  color: var(--brand);
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.btn-install {
+  padding: 12px 32px;
+  background: var(--brand);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-family: inherit;
+}
+
+.btn-install:hover {
+  background: var(--brand-hover);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 16px var(--brand-glow);
+}
+
+.plugin-hint {
+  margin-top: 20px;
+  padding: 12px 16px;
+  background: var(--bg-input);
+  border: 1px solid var(--border-subtle);
+  border-radius: 8px;
+  font-size: 11px;
+  color: var(--text-muted);
+  text-align: left;
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+}
+
+/* ========== 技能管理页 ========== */
+.skills-toolbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
+.skills-stats {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+}
+
+.skills-stats .big {
+  font-family: var(--font-display);
+  font-size: 28px;
+  font-weight: 500;
+  letter-spacing: -0.02em;
+}
+
+.skills-stats .label {
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+.skills-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.skills-search {
+  position: relative;
+  margin-bottom: 16px;
+}
+
+.skills-search input {
+  width: 100%;
+  height: 40px;
+  background: var(--bg-card);
+  border: 1px solid var(--border-subtle);
+  border-radius: 8px;
+  padding: 0 14px 0 40px;
+  color: var(--text-primary);
+  font-size: 13px;
+  font-family: inherit;
+  outline: none;
+}
+
+.skills-search svg {
+  position: absolute;
+  left: 14px;
+  top: 12px;
+  color: var(--text-muted);
+}
+
+.skill-categories {
+  display: flex;
+  gap: 6px;
+  margin-bottom: 18px;
+  overflow-x: auto;
+  padding-bottom: 2px;
+}
+
+.skill-cat {
+  padding: 6px 12px;
+  font-size: 12px;
+  color: var(--text-secondary);
+  background: var(--bg-card);
+  border: 1px solid var(--border-subtle);
+  border-radius: 20px;
+  cursor: pointer;
+  transition: all 0.15s;
+  white-space: nowrap;
+  font-weight: 500;
+}
+
+.skill-cat:hover {
+  border-color: var(--border-default);
+  color: var(--text-primary);
+}
+
+.skill-cat.active {
+  background: var(--bg-elevated);
+  border-color: var(--brand);
+  color: var(--brand);
+}
+
+.skills-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.skill-item {
+  background: var(--bg-card);
+  border: 1px solid var(--border-subtle);
+  border-radius: 10px;
+  padding: 14px 16px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  transition: all 0.15s;
+}
+
+.skill-item:hover {
+  background: var(--bg-card-hover);
+  border-color: var(--border-default);
+}
+
+.skill-icon {
+  width: 38px;
+  height: 38px;
+  border-radius: 9px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: 13px;
+  color: white;
+}
+
+.skill-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.skill-name {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: 2px;
+}
+
+.skill-desc {
+  font-size: 11px;
+  color: var(--text-muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.skill-toggle {
+  width: 34px;
+  height: 20px;
+  background: var(--bg-input);
+  border-radius: 10px;
+  position: relative;
+  cursor: pointer;
+  transition: all 0.2s;
+  border: 1px solid var(--border-default);
+  flex-shrink: 0;
+}
+
+.skill-toggle::after {
+  content: '';
+  position: absolute;
+  top: 1px;
+  left: 1px;
+  width: 16px;
+  height: 16px;
+  background: var(--text-muted);
+  border-radius: 50%;
+  transition: all 0.2s;
+}
+
+.skill-toggle.on {
+  background: var(--brand);
+  border-color: var(--brand);
+}
+
+.skill-toggle.on::after {
+  left: 15px;
+  background: white;
+}
+
+/* SVG logo */
+.logo-mark svg {
+  width: 100%;
+  height: 100%;
+}
+
+/* Scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: var(--border-default);
+  border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--border-strong);
+}
+
+/* 页面切换 */
+.page-view {
+  display: none;
+}
+.page-view.active {
+  display: block;
+  animation: fadeIn 0.3s ease;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+</style>
+</head>
+<body>
+
+<!-- 复用的 SVG Logo -->
+<svg width="0" height="0" style="position:absolute">
+  <defs>
+    <!-- Open Claw 钳爪 logo mark -->
+    <symbol id="logo-claw" viewBox="0 0 32 32">
+      <path d="M 16 4 A 12 12 0 1 1 7.03 24.97"
+            stroke="currentColor" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+      <path d="M 16 11 A 5 5 0 1 1 12.46 19.54"
+            stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round"/>
+      <circle cx="21" cy="8" r="1.5" fill="currentColor"/>
+    </symbol>
+  </defs>
+</svg>
+
+<div class="showcase">
+  <!-- 左侧导航 -->
+  <aside class="showcase-nav">
+    <div class="showcase-brand">
+      <div class="logo-mark">
+        <svg><use href="#logo-claw"/></svg>
+      </div>
+      <div>
+        <h1>OpenClaw</h1>
+        <div class="subtitle">V5 · UI DESIGN</div>
+      </div>
+    </div>
+
+    <div class="nav-section">
+      <div class="nav-label">认证流程</div>
+      <div class="nav-item active" data-page="login">
+        <span>登录 / 注册</span>
+        <span class="num">01</span>
+      </div>
+    </div>
+
+    <div class="nav-section">
+      <div class="nav-label">主界面</div>
+      <div class="nav-item" data-page="home">
+        <span>首页 · Gateway</span>
+        <span class="num">02</span>
+      </div>
+      <div class="nav-item" data-page="models">
+        <span>模型配置</span>
+        <span class="num">03</span>
+      </div>
+      <div class="nav-item" data-page="topup">
+        <span>模型充值</span>
+        <span class="num">04</span>
+      </div>
+      <div class="nav-item" data-page="chat">
+        <span>聊天工具</span>
+        <span class="num">05</span>
+      </div>
+      <div class="nav-item" data-page="skills">
+        <span>技能管理</span>
+        <span class="num">06</span>
+      </div>
+    </div>
+
+    <div class="nav-section">
+      <div class="nav-label">设计规范</div>
+      <div style="padding: 8px 10px; font-size: 11px; color: var(--text-muted); font-family: var(--font-mono); line-height: 1.8;">
+        主色 #E94B3C<br>
+        背景 #08090D<br>
+        字体 Fraunces + Jakarta<br>
+        圆角 8—12px<br>
+        栅格 8px 基线
+      </div>
+    </div>
+  </aside>
+
+  <!-- 主展示区 -->
+  <main class="showcase-main">
+
+    <!-- ============= 登录页 ============= -->
+    <div class="page-view active" id="page-login">
+      <div class="showcase-header">
+        <h2>登录 / 注册</h2>
+        <p>首次打开的入口窗口,固定尺寸 480 × 640,不可调整大小</p>
+        <div class="meta">
+          <span><i class="dot"></i>LOGIN.HTML</span>
+          <span>— 独立窗口</span>
+          <span>— 居中显示</span>
+        </div>
+      </div>
+
+      <div class="window-frame" style="width: 480px;">
+        <div class="window-titlebar">
+          <div class="window-controls">
+            <div class="dot"></div>
+            <div class="dot"></div>
+            <div class="dot"></div>
+          </div>
+          <div class="window-title">OpenClaw · <span>登录</span></div>
+        </div>
+
+        <div class="login-container">
+          <div class="login-inner">
+            <div class="login-brand">
+              <div class="logo-mark">
+                <svg><use href="#logo-claw"/></svg>
+              </div>
+              <h1>OpenClaw</h1>
+              <div class="version">PORTABLE · V5.0.0</div>
+            </div>
+
+            <div class="login-tabs">
+              <div class="login-tab active">登录</div>
+              <div class="login-tab">注册</div>
+            </div>
+
+            <div class="form-field">
+              <label class="form-label">邮箱或手机号</label>
+              <input type="text" class="form-input" placeholder="your@email.com" value="zhang.san@example.com">
+            </div>
+
+            <div class="form-field">
+              <label class="form-label">密码</label>
+              <input type="password" class="form-input" placeholder="请输入密码" value="••••••••••">
+            </div>
+
+            <div class="form-help">
+              <a>忘记密码?</a>
+              <a>没有账号? 立即注册 →</a>
+            </div>
+
+            <button class="btn-primary">登 录</button>
+
+            <div class="login-divider">WELCOME</div>
+
+            <div class="login-gift">
+              <div class="icon">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <polyline points="20 12 20 22 4 22 4 12"/>
+                  <rect x="2" y="7" width="20" height="5"/>
+                  <line x1="12" y1="22" x2="12" y2="7"/>
+                  <path d="M12 7H7.5a2.5 2.5 0 0 1 0-5C11 2 12 7 12 7z"/>
+                  <path d="M12 7h4.5a2.5 2.5 0 0 0 0-5C13 2 12 7 12 7z"/>
+                </svg>
+              </div>
+              <div class="content">
+                <div class="title">新用户专享 ¥20 体验额度</div>
+                <div class="desc">注册即送,无需充值立即使用 AI 能力</div>
+              </div>
+            </div>
+
+            <div class="login-footer">
+              <a>用户协议</a>
+              <a>隐私政策</a>
+              <a>联系客服</a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ============= 首页 Gateway ============= -->
+    <div class="page-view" id="page-home">
+      <div class="showcase-header">
+        <h2>首页 · Gateway 控制中心</h2>
+        <p>用户打开应用的落脚页,核心操作区域,启动/停止 AI 服务</p>
+        <div class="meta">
+          <span><i class="dot"></i>LAUNCHER.HTML</span>
+          <span>— 1180 × 740 默认尺寸</span>
+          <span>— 可调整</span>
+        </div>
+      </div>
+
+      <div class="window-frame" style="width: 1180px;">
+        <div class="window-titlebar">
+          <div class="window-controls">
+            <div class="dot"></div>
+            <div class="dot"></div>
+            <div class="dot"></div>
+          </div>
+          <div class="window-title">OpenClaw 便携版 · <span>v5.0.0</span></div>
+        </div>
+
+        <div class="launcher-container">
+          <!-- 侧边栏 -->
+          <aside class="sidebar">
+            <div class="sidebar-brand">
+              <div class="logo-mark">
+                <svg><use href="#logo-claw"/></svg>
+              </div>
+              <div>
+                <div class="name">OpenClaw</div>
+                <div class="version">V 5.0.0</div>
+              </div>
+            </div>
+
+            <div class="sidebar-menu">
+              <div class="menu-item active">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+                  <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
+                  <polyline points="9 22 9 12 15 12 15 22"/>
+                </svg>
+                <span>首页</span>
+              </div>
+              <div class="menu-item">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+                  <rect x="4" y="4" width="16" height="16" rx="2"/>
+                  <rect x="9" y="9" width="6" height="6"/>
+                  <line x1="9" y1="2" x2="9" y2="4"/>
+                  <line x1="15" y1="2" x2="15" y2="4"/>
+                  <line x1="9" y1="20" x2="9" y2="22"/>
+                  <line x1="15" y1="20" x2="15" y2="22"/>
+                </svg>
+                <span>模型配置</span>
+              </div>
+              <div class="menu-item">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+                  <rect x="1" y="4" width="22" height="16" rx="2"/>
+                  <line x1="1" y1="10" x2="23" y2="10"/>
+                </svg>
+                <span>模型充值</span>
+              </div>
+              <div class="menu-item">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+                  <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+                </svg>
+                <span>聊天工具</span>
+              </div>
+              <div class="menu-item">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+                  <path d="M20 7h-9M14 17H5"/>
+                  <circle cx="17" cy="17" r="3"/>
+                  <circle cx="7" cy="7" r="3"/>
+                </svg>
+                <span>技能管理</span>
+              </div>
+              <div class="menu-item">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+                  <path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/>
+                </svg>
+                <span>环境检查</span>
+              </div>
+              <div class="menu-item">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+                  <path d="M3 18v-6a9 9 0 0 1 18 0v6"/>
+                  <path d="M21 19a2 2 0 0 1-2 2h-1v-4h3zM3 19a2 2 0 0 0 2 2h1v-4H3z"/>
+                </svg>
+                <span>联系客服</span>
+              </div>
+              <div class="menu-item">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+                  <circle cx="12" cy="12" r="3"/>
+                  <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+                </svg>
+                <span>设置</span>
+              </div>
+            </div>
+
+            <div class="sidebar-footer">
+              <button class="sidebar-gateway-btn">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+                  <circle cx="12" cy="12" r="10"/>
+                  <polygon points="10 8 16 12 10 16 10 8" fill="currentColor"/>
+                </svg>
+                <span>启动 Gateway</span>
+              </button>
+            </div>
+          </aside>
+
+          <!-- 主内容 -->
+          <div class="main-area">
+            <div class="topbar">
+              <div class="topbar-title">
+                <h3>首页</h3>
+                <div class="topbar-badge live">RUNNING</div>
+              </div>
+              <div class="topbar-right">
+                <div class="balance-display">
+                  <span class="label">余额</span>
+                  <span class="amount"><span class="currency">¥</span>123.45</span>
+                  <span class="topup-btn">充值</span>
+                </div>
+                <div class="user-avatar">ZS</div>
+              </div>
+            </div>
+
+            <div class="content-area">
+              <!-- Gateway Hero -->
+              <div class="gateway-hero">
+                <div class="gateway-hero-left">
+                  <div class="gateway-hero-label">GATEWAY CONTROL</div>
+                  <div class="gateway-hero-title">Gateway 运行中</div>
+                  <div class="gateway-hero-status running">
+                    <div class="status-dot"></div>
+                    <span>已服务 00:12:34 · localhost:7788</span>
+                  </div>
+                </div>
+                <div class="gateway-hero-right">
+                  <button class="btn-repair">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+                      <path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/>
+                    </svg>
+                    修复
+                  </button>
+                  <button class="btn-launch">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+                      <rect x="6" y="5" width="4" height="14" rx="1"/>
+                      <rect x="14" y="5" width="4" height="14" rx="1"/>
+                    </svg>
+                    停止
+                  </button>
+                </div>
+              </div>
+
+              <!-- 状态卡片 -->
+              <div class="status-grid">
+                <div class="status-card">
+                  <div class="status-card-head">
+                    <div class="status-icon">
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round">
+                        <polyline points="20 6 9 17 4 12"/>
+                      </svg>
+                    </div>
+                    <div class="status-mono">SYS</div>
+                  </div>
+                  <div class="status-card-name">Node.js</div>
+                  <div class="status-card-value">v22.15.0</div>
+                </div>
+
+                <div class="status-card">
+                  <div class="status-card-head">
+                    <div class="status-icon">
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round">
+                        <polyline points="20 6 9 17 4 12"/>
+                      </svg>
+                    </div>
+                    <div class="status-mono">APP</div>
+                  </div>
+                  <div class="status-card-name">OpenClaw</div>
+                  <div class="status-card-value">v5.0.0 (cff6dc9)</div>
+                </div>
+
+                <div class="status-card">
+                  <div class="status-card-head">
+                    <div class="status-icon">
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round">
+                        <polyline points="20 6 9 17 4 12"/>
+                      </svg>
+                    </div>
+                    <div class="status-mono">ENV</div>
+                  </div>
+                  <div class="status-card-name">运行环境</div>
+                  <div class="status-card-value ok">完整</div>
+                </div>
+
+                <div class="status-card">
+                  <div class="status-card-head">
+                    <div class="status-icon">
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round">
+                        <polyline points="20 6 9 17 4 12"/>
+                      </svg>
+                    </div>
+                    <div class="status-mono">CFG</div>
+                  </div>
+                  <div class="status-card-name">配置文件</div>
+                  <div class="status-card-value ok">正常</div>
+                </div>
+
+                <div class="status-card">
+                  <div class="status-card-head">
+                    <div class="status-icon">
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round">
+                        <polyline points="20 6 9 17 4 12"/>
+                      </svg>
+                    </div>
+                    <div class="status-mono">PORT</div>
+                  </div>
+                  <div class="status-card-name">端口</div>
+                  <div class="status-card-value">7788 已监听</div>
+                </div>
+
+                <div class="status-card">
+                  <div class="status-card-head">
+                    <div class="status-icon">
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round">
+                        <polyline points="20 6 9 17 4 12"/>
+                      </svg>
+                    </div>
+                    <div class="status-mono">AUTH</div>
+                  </div>
+                  <div class="status-card-name">账号认证</div>
+                  <div class="status-card-value ok">已登录</div>
+                </div>
+
+                <div class="status-card">
+                  <div class="status-card-head">
+                    <div class="status-icon">
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round">
+                        <polyline points="20 6 9 17 4 12"/>
+                      </svg>
+                    </div>
+                    <div class="status-mono">ACL</div>
+                  </div>
+                  <div class="status-card-name">文件权限</div>
+                  <div class="status-card-value ok">正常</div>
+                </div>
+
+                <div class="status-card">
+                  <div class="status-card-head">
+                    <div class="status-icon">
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round">
+                        <polyline points="20 6 9 17 4 12"/>
+                      </svg>
+                    </div>
+                    <div class="status-mono">PLUG</div>
+                  </div>
+                  <div class="status-card-name">插件</div>
+                  <div class="status-card-value">3 已加载</div>
+                </div>
+              </div>
+
+              <!-- 日志 -->
+              <div class="logs-panel">
+                <div class="logs-head">
+                  <div class="logs-head-title">
+                    <h4>实时日志</h4>
+                    <div class="logs-stream-indicator">
+                      <div class="logs-stream-dot"></div>
+                      STREAMING
+                    </div>
+                  </div>
+                  <div class="logs-clear">CLEAR</div>
+                </div>
+                <div class="logs-content">
+                  <div class="log-line">
+                    <span class="log-time">23:11:05</span>
+                    <span class="log-level info">INFO</span>
+                    <span class="log-text">Gateway 启动中...</span>
+                  </div>
+                  <div class="log-line">
+                    <span class="log-time">23:11:06</span>
+                    <span class="log-level info">INFO</span>
+                    <span class="log-text">验证灵镜AI 账号中...</span>
+                  </div>
+                  <div class="log-line">
+                    <span class="log-time">23:11:07</span>
+                    <span class="log-level ok">OK</span>
+                    <span class="log-text">账号验证成功,当前余额 ¥123.45</span>
+                  </div>
+                  <div class="log-line">
+                    <span class="log-time">23:11:08</span>
+                    <span class="log-level ok">OK</span>
+                    <span class="log-text">Gateway 运行在 localhost:7788</span>
+                  </div>
+                  <div class="log-line">
+                    <span class="log-time">23:11:08</span>
+                    <span class="log-level ok">OK</span>
+                    <span class="log-text">所有服务就绪,可以开始使用</span>
+                  </div>
+                  <div class="log-line">
+                    <span class="log-time">23:11:42</span>
+                    <span class="log-level info">INFO</span>
+                    <span class="log-text">收到 API 请求 POST /v1/chat/completions</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ============= 模型配置页 ============= -->
+    <div class="page-view" id="page-models">
+      <div class="showcase-header">
+        <h2>模型配置</h2>
+        <p>登录后自动获取官方模型配置,高级用户可切换自定义 API Key</p>
+        <div class="meta">
+          <span><i class="dot"></i>模型配置视图</span>
+          <span>— Tab 切换布局</span>
+        </div>
+      </div>
+
+      <div class="window-frame" style="width: 1180px;">
+        <div class="window-titlebar">
+          <div class="window-controls">
+            <div class="dot"></div>
+            <div class="dot"></div>
+            <div class="dot"></div>
+          </div>
+          <div class="window-title">OpenClaw · <span>模型配置</span></div>
+        </div>
+
+        <div class="launcher-container">
+          <aside class="sidebar">
+            <div class="sidebar-brand">
+              <div class="logo-mark"><svg><use href="#logo-claw"/></svg></div>
+              <div>
+                <div class="name">OpenClaw</div>
+                <div class="version">V 5.0.0</div>
+              </div>
+            </div>
+            <div class="sidebar-menu">
+              <div class="menu-item">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>
+                <span>首页</span>
+              </div>
+              <div class="menu-item active">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="4" y="4" width="16" height="16" rx="2"/><rect x="9" y="9" width="6" height="6"/></svg>
+                <span>模型配置</span>
+              </div>
+              <div class="menu-item">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
+                <span>模型充值</span>
+              </div>
+              <div class="menu-item">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+                <span>聊天工具</span>
+              </div>
+              <div class="menu-item">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M20 7h-9M14 17H5"/><circle cx="17" cy="17" r="3"/><circle cx="7" cy="7" r="3"/></svg>
+                <span>技能管理</span>
+              </div>
+              <div class="menu-item">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg>
+                <span>环境检查</span>
+              </div>
+              <div class="menu-item">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 18v-6a9 9 0 0 1 18 0v6"/></svg>
+                <span>联系客服</span>
+              </div>
+              <div class="menu-item">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="3"/></svg>
+                <span>设置</span>
+              </div>
+            </div>
+            <div class="sidebar-footer">
+              <button class="sidebar-gateway-btn stop">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="6" width="12" height="12" rx="1"/></svg>
+                <span>停止 Gateway</span>
+              </button>
+            </div>
+          </aside>
+
+          <div class="main-area">
+            <div class="topbar">
+              <div class="topbar-title">
+                <h3>模型配置</h3>
+              </div>
+              <div class="topbar-right">
+                <div class="balance-display">
+                  <span class="label">余额</span>
+                  <span class="amount"><span class="currency">¥</span>123.45</span>
+                  <span class="topup-btn">充值</span>
+                </div>
+                <div class="user-avatar">ZS</div>
+              </div>
+            </div>
+
+            <div class="content-area">
+              <div class="page-header">
+                <div class="page-title">模型配置</div>
+                <div class="page-subtitle">选择使用官方代理模型,或配置自己的 API Key</div>
+              </div>
+
+              <div class="model-tabs">
+                <div class="model-tab active">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M12 2L2 7l10 5 10-5-10-5z"/>
+                  </svg>
+                  官方模型
+                </div>
+                <div class="model-tab">自定义模型</div>
+              </div>
+
+              <div class="model-layout">
+                <div class="model-card">
+                  <div class="model-card-head">
+                    <div class="model-card-icon">
+                      <svg width="20" height="20"><use href="#logo-claw"/></svg>
+                    </div>
+                    <div>
+                      <div class="model-card-title">OpenClaw 官方中转</div>
+                      <div class="model-card-desc">国内直连,稳定快速,无需翻墙</div>
+                    </div>
+                  </div>
+
+                  <ul class="model-features">
+                    <li>支持 GPT-5 · Claude Opus 4.7 · Gemini 2.5 Pro</li>
+                    <li>国内高速线路,平均响应时间 &lt; 300ms</li>
+                    <li>按 Token 实际消耗计费,充值即用</li>
+                    <li>官方签发账号,无账号风险</li>
+                  </ul>
+
+                  <div class="key-input-group">
+                    <label class="form-label">API Key</label>
+                    <div class="key-input-wrap">
+                      <input type="password" class="form-input" value="sk-lj-xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx" readonly>
+                      <button class="btn-secondary">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+                          <rect x="9" y="9" width="13" height="13" rx="2"/>
+                          <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
+                        </svg>
+                        复制
+                      </button>
+                      <button class="btn-secondary">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+                          <polyline points="1 4 1 10 7 10"/>
+                          <path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/>
+                        </svg>
+                        重置
+                      </button>
+                    </div>
+                  </div>
+
+                  <div style="display: flex; gap: 10px; margin-top: 8px;">
+                    <button class="btn-primary" style="flex:1">保存配置</button>
+                  </div>
+                </div>
+
+                <div class="usage-card">
+                  <div class="usage-head">
+                    <h4>用量统计</h4>
+                    <div class="usage-refresh">⟳ REFRESH</div>
+                  </div>
+
+                  <div class="usage-balance-label">当前余额</div>
+                  <div class="usage-balance"><span class="currency">¥</span>123.45</div>
+                  <div class="usage-sub">约可调用 GPT-5 12,345 次</div>
+
+                  <div class="usage-progress">
+                    <div class="usage-progress-fill"></div>
+                  </div>
+                  <div class="usage-legend">
+                    <span>已用 ¥2.55</span>
+                    <span>总额 ¥126.00</span>
+                  </div>
+
+                  <div style="margin-top: 24px; padding-top: 20px; border-top: 1px solid var(--border-subtle);">
+                    <div style="display: flex; justify-content: space-between; padding: 8px 0; font-size: 12px;">
+                      <span style="color: var(--text-muted)">今日消耗</span>
+                      <span style="color: var(--text-primary); font-family: var(--font-mono)">¥0.85</span>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; padding: 8px 0; font-size: 12px;">
+                      <span style="color: var(--text-muted)">本月消耗</span>
+                      <span style="color: var(--text-primary); font-family: var(--font-mono)">¥2.55</span>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; padding: 8px 0; font-size: 12px;">
+                      <span style="color: var(--text-muted)">累计充值</span>
+                      <span style="color: var(--text-primary); font-family: var(--font-mono)">¥126.00</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ============= 充值页 ============= -->
+    <div class="page-view" id="page-topup">
+      <div class="showcase-header">
+        <h2>官方模型充值</h2>
+        <p>充值额度用于 AI 调用按量计费,跳转浏览器完成支付</p>
+        <div class="meta">
+          <span><i class="dot"></i>充值流程</span>
+          <span>— 浏览器外跳支付</span>
+        </div>
+      </div>
+
+      <div class="window-frame" style="width: 1180px;">
+        <div class="window-titlebar">
+          <div class="window-controls">
+            <div class="dot"></div>
+            <div class="dot"></div>
+            <div class="dot"></div>
+          </div>
+          <div class="window-title">OpenClaw · <span>模型充值</span></div>
+        </div>
+
+        <div class="launcher-container">
+          <aside class="sidebar">
+            <div class="sidebar-brand">
+              <div class="logo-mark"><svg><use href="#logo-claw"/></svg></div>
+              <div>
+                <div class="name">OpenClaw</div>
+                <div class="version">V 5.0.0</div>
+              </div>
+            </div>
+            <div class="sidebar-menu">
+              <div class="menu-item">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>
+                <span>首页</span>
+              </div>
+              <div class="menu-item">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="4" y="4" width="16" height="16" rx="2"/><rect x="9" y="9" width="6" height="6"/></svg>
+                <span>模型配置</span>
+              </div>
+              <div class="menu-item active">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
+                <span>模型充值</span>
+              </div>
+              <div class="menu-item">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+                <span>聊天工具</span>
+              </div>
+              <div class="menu-item">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M20 7h-9M14 17H5"/><circle cx="17" cy="17" r="3"/><circle cx="7" cy="7" r="3"/></svg>
+                <span>技能管理</span>
+              </div>
+              <div class="menu-item">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg>
+                <span>环境检查</span>
+              </div>
+              <div class="menu-item">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 18v-6a9 9 0 0 1 18 0v6"/></svg>
+                <span>联系客服</span>
+              </div>
+              <div class="menu-item">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="3"/></svg>
+                <span>设置</span>
+              </div>
+            </div>
+            <div class="sidebar-footer">
+              <button class="sidebar-gateway-btn stop">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="6" width="12" height="12" rx="1"/></svg>
+                <span>停止 Gateway</span>
+              </button>
+            </div>
+          </aside>
+
+          <div class="main-area">
+            <div class="topbar">
+              <div class="topbar-title">
+                <h3>官方模型充值</h3>
+              </div>
+              <div class="topbar-right">
+                <div class="balance-display">
+                  <span class="label">余额</span>
+                  <span class="amount"><span class="currency">¥</span>123.45</span>
+                  <span class="topup-btn">充值</span>
+                </div>
+                <div class="user-avatar">ZS</div>
+              </div>
+            </div>
+
+            <div class="content-area">
+              <!-- Balance Hero -->
+              <div class="topup-hero">
+                <div class="topup-hero-label">ACCOUNT BALANCE</div>
+                <div class="topup-balance-row">
+                  <div class="topup-balance"><span class="currency">¥</span>123.45</div>
+                  <div class="topup-used">
+                    <div class="label">已使用</div>
+                    <div class="value">¥2.55</div>
+                  </div>
+                  <div class="topup-used">
+                    <div class="label">累计充值</div>
+                    <div class="value">¥126.00</div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Info -->
+              <div class="topup-info-banner">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+                  <circle cx="12" cy="12" r="10"/>
+                  <line x1="12" y1="16" x2="12" y2="12"/>
+                  <line x1="12" y1="8" x2="12.01" y2="8"/>
+                </svg>
+                <p>此充值仅用于官方代理的 AI 模型调用费用(按实际 Token 用量计费)。OpenClaw 软件本身完全免费,您也可以在「模型配置」中填入自己的 API Key 来使用自有额度。</p>
+              </div>
+
+              <!-- Amount selection -->
+              <div class="topup-amounts-section">
+                <div class="topup-section-title">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
+                  快速充值
+                </div>
+                <div class="topup-amounts-grid">
+                  <button class="amount-btn">
+                    <div class="amount-value"><span class="currency">¥</span>10</div>
+                  </button>
+                  <button class="amount-btn">
+                    <div class="amount-value"><span class="currency">¥</span>30</div>
+                  </button>
+                  <button class="amount-btn active">
+                    <div class="amount-badge">推荐</div>
+                    <div class="amount-value"><span class="currency">¥</span>50</div>
+                    <div class="amount-bonus">+ ¥5 赠送</div>
+                  </button>
+                  <button class="amount-btn">
+                    <div class="amount-value"><span class="currency">¥</span>100</div>
+                    <div class="amount-bonus">+ ¥15 赠送</div>
+                  </button>
+                  <button class="amount-btn">
+                    <div class="amount-value"><span class="currency">¥</span>200</div>
+                    <div class="amount-bonus">+ ¥40 赠送</div>
+                  </button>
+                  <button class="amount-btn">
+                    <div class="amount-value"><span class="currency">¥</span>500</div>
+                    <div class="amount-bonus">+ ¥120 赠送</div>
+                  </button>
+                </div>
+                <div class="custom-amount-wrap">
+                  <span class="custom-amount-prefix">¥</span>
+                  <input type="text" class="form-input" placeholder="自定义金额(最低 1 元)">
+                </div>
+              </div>
+
+              <!-- Payment methods -->
+              <div class="payment-methods">
+                <div class="topup-section-title">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+                    <rect x="2" y="5" width="20" height="14" rx="2"/>
+                    <line x1="2" y1="10" x2="22" y2="10"/>
+                  </svg>
+                  支付方式
+                </div>
+                <div class="payment-grid">
+                  <div class="payment-option active">
+                    <div class="payment-icon">
+                      <svg width="18" height="18" viewBox="0 0 24 24" fill="#00A1E9"><path d="M18.5 6h-13C4.12 6 3 7.12 3 8.5v7C3 16.88 4.12 18 5.5 18h13c1.38 0 2.5-1.12 2.5-2.5v-7C21 7.12 19.88 6 18.5 6z"/></svg>
+                    </div>
+                    <div>
+                      <div class="payment-name">支付宝</div>
+                    </div>
+                  </div>
+                  <div class="payment-option disabled">
+                    <div class="payment-icon">
+                      <svg width="18" height="18" viewBox="0 0 24 24" fill="#2CB034"><circle cx="12" cy="12" r="10"/></svg>
+                    </div>
+                    <div>
+                      <div class="payment-name">微信支付</div>
+                      <div class="payment-coming">即将开通</div>
+                    </div>
+                    <div class="payment-badge">SOON</div>
+                  </div>
+                </div>
+
+                <div style="margin-top: 20px; padding-top: 20px; border-top: 1px solid var(--border-subtle); display: flex; justify-content: space-between; align-items: center;">
+                  <div>
+                    <div style="font-size: 11px; color: var(--text-muted); font-family: var(--font-mono); letter-spacing: 0.1em; margin-bottom: 4px;">TOTAL</div>
+                    <div style="font-family: var(--font-display); font-size: 28px; font-weight: 500; color: var(--text-primary);"><span style="color: var(--text-muted); font-size: 14px;">¥</span>50.00</div>
+                  </div>
+                  <button class="btn-primary" style="width: auto; padding: 0 32px;">
+                    立即支付 →
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ============= 聊天工具页 ============= -->
+    <div class="page-view" id="page-chat">
+      <div class="showcase-header">
+        <h2>聊天工具接入</h2>
+        <p>把 AI 塞进用户熟悉的聊天工具:微信 / Telegram / 飞书</p>
+        <div class="meta">
+          <span><i class="dot"></i>插件安装</span>
+          <span>— 三个 Tab 切换</span>
+        </div>
+      </div>
+
+      <div class="window-frame" style="width: 1180px;">
+        <div class="window-titlebar">
+          <div class="window-controls">
+            <div class="dot"></div>
+            <div class="dot"></div>
+            <div class="dot"></div>
+          </div>
+          <div class="window-title">OpenClaw · <span>聊天工具</span></div>
+        </div>
+
+        <div class="launcher-container">
+          <aside class="sidebar">
+            <div class="sidebar-brand">
+              <div class="logo-mark"><svg><use href="#logo-claw"/></svg></div>
+              <div>
+                <div class="name">OpenClaw</div>
+                <div class="version">V 5.0.0</div>
+              </div>
+            </div>
+            <div class="sidebar-menu">
+              <div class="menu-item">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>
+                <span>首页</span>
+              </div>
+              <div class="menu-item">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="4" y="4" width="16" height="16" rx="2"/><rect x="9" y="9" width="6" height="6"/></svg>
+                <span>模型配置</span>
+              </div>
+              <div class="menu-item">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
+                <span>模型充值</span>
+              </div>
+              <div class="menu-item active">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+                <span>聊天工具</span>
+              </div>
+              <div class="menu-item">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M20 7h-9M14 17H5"/><circle cx="17" cy="17" r="3"/><circle cx="7" cy="7" r="3"/></svg>
+                <span>技能管理</span>
+              </div>
+              <div class="menu-item">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg>
+                <span>环境检查</span>
+              </div>
+              <div class="menu-item">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 18v-6a9 9 0 0 1 18 0v6"/></svg>
+                <span>联系客服</span>
+              </div>
+              <div class="menu-item">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="3"/></svg>
+                <span>设置</span>
+              </div>
+            </div>
+            <div class="sidebar-footer">
+              <button class="sidebar-gateway-btn stop">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="6" width="12" height="12" rx="1"/></svg>
+                <span>停止 Gateway</span>
+              </button>
+            </div>
+          </aside>
+
+          <div class="main-area">
+            <div class="topbar">
+              <div class="topbar-title">
+                <h3>聊天工具</h3>
+              </div>
+              <div class="topbar-right">
+                <div class="balance-display">
+                  <span class="label">余额</span>
+                  <span class="amount"><span class="currency">¥</span>123.45</span>
+                  <span class="topup-btn">充值</span>
+                </div>
+                <div class="user-avatar">ZS</div>
+              </div>
+            </div>
+
+            <div class="content-area">
+              <div class="page-header">
+                <div class="page-title">聊天工具</div>
+                <div class="page-subtitle">安装插件后,AI 即可在你常用的工具中自动回复</div>
+              </div>
+
+              <div class="chat-tabs">
+                <div class="chat-tab active">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="#2CB034"><circle cx="12" cy="12" r="10"/></svg>
+                  微信
+                </div>
+                <div class="chat-tab">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="#229ED9"><circle cx="12" cy="12" r="10"/></svg>
+                  Telegram
+                </div>
+                <div class="chat-tab">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="#00D6B9"><circle cx="12" cy="12" r="10"/></svg>
+                  飞书
+                </div>
+              </div>
+
+              <div class="plugin-install-card">
+                <div class="plugin-install-icon">
+                  <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+                    <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+                  </svg>
+                </div>
+                <div class="plugin-title">一键安装 微信插件</div>
+                <div class="plugin-subtitle">安装后扫码连接微信,让 AI 在你的聊天中自动回复消息。建议使用企业微信 / 微信客服接口,避免账号风险。</div>
+
+                <div class="plugin-steps">
+                  <div class="plugin-step">
+                    <div class="plugin-step-num">1</div>
+                    <div>点击安装,自动下载微信插件</div>
+                  </div>
+                  <div class="plugin-step">
+                    <div class="plugin-step-num">2</div>
+                    <div>安装完成后显示登录二维码</div>
+                  </div>
+                  <div class="plugin-step">
+                    <div class="plugin-step-num">3</div>
+                    <div>用手机微信扫码即可连接</div>
+                  </div>
+                </div>
+
+                <button class="btn-install">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
+                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                    <polyline points="7 10 12 15 17 10"/>
+                    <line x1="12" y1="15" x2="12" y2="3"/>
+                  </svg>
+                  开始安装
+                </button>
+
+                <div class="plugin-hint">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" style="flex-shrink:0; color: var(--info)">
+                    <circle cx="12" cy="12" r="10"/>
+                    <line x1="12" y1="16" x2="12" y2="12"/>
+                    <line x1="12" y1="8" x2="12.01" y2="8"/>
+                  </svg>
+                  <span>连接后,在微信里 @AI 或私信发送消息即可对话。断开后需要重新扫码连接。所有对话消耗 Token 将从账户余额扣除。</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ============= 技能管理页 ============= -->
+    <div class="page-view" id="page-skills">
+      <div class="showcase-header">
+        <h2>技能管理</h2>
+        <p>开启你需要的 AI 技能,分类浏览,按需启用</p>
+        <div class="meta">
+          <span><i class="dot"></i>技能中心</span>
+          <span>— 59 个技能 · 分类筛选</span>
+        </div>
+      </div>
+
+      <div class="window-frame" style="width: 1180px;">
+        <div class="window-titlebar">
+          <div class="window-controls">
+            <div class="dot"></div>
+            <div class="dot"></div>
+            <div class="dot"></div>
+          </div>
+          <div class="window-title">OpenClaw · <span>技能管理</span></div>
+        </div>
+
+        <div class="launcher-container">
+          <aside class="sidebar">
+            <div class="sidebar-brand">
+              <div class="logo-mark"><svg><use href="#logo-claw"/></svg></div>
+              <div>
+                <div class="name">OpenClaw</div>
+                <div class="version">V 5.0.0</div>
+              </div>
+            </div>
+            <div class="sidebar-menu">
+              <div class="menu-item">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>
+                <span>首页</span>
+              </div>
+              <div class="menu-item">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="4" y="4" width="16" height="16" rx="2"/><rect x="9" y="9" width="6" height="6"/></svg>
+                <span>模型配置</span>
+              </div>
+              <div class="menu-item">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
+                <span>模型充值</span>
+              </div>
+              <div class="menu-item">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+                <span>聊天工具</span>
+              </div>
+              <div class="menu-item active">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M20 7h-9M14 17H5"/><circle cx="17" cy="17" r="3"/><circle cx="7" cy="7" r="3"/></svg>
+                <span>技能管理</span>
+              </div>
+              <div class="menu-item">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg>
+                <span>环境检查</span>
+              </div>
+              <div class="menu-item">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 18v-6a9 9 0 0 1 18 0v6"/></svg>
+                <span>联系客服</span>
+              </div>
+              <div class="menu-item">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="3"/></svg>
+                <span>设置</span>
+              </div>
+            </div>
+            <div class="sidebar-footer">
+              <button class="sidebar-gateway-btn stop">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="6" width="12" height="12" rx="1"/></svg>
+                <span>停止 Gateway</span>
+              </button>
+            </div>
+          </aside>
+
+          <div class="main-area">
+            <div class="topbar">
+              <div class="topbar-title">
+                <h3>技能管理</h3>
+              </div>
+              <div class="topbar-right">
+                <div class="balance-display">
+                  <span class="label">余额</span>
+                  <span class="amount"><span class="currency">¥</span>123.45</span>
+                  <span class="topup-btn">充值</span>
+                </div>
+                <div class="user-avatar">ZS</div>
+              </div>
+            </div>
+
+            <div class="content-area">
+              <div class="skills-toolbar">
+                <div class="skills-stats">
+                  <span class="big">59</span>
+                  <span class="label">个技能 · 已启用 3 个</span>
+                </div>
+                <div class="skills-actions">
+                  <button class="btn-secondary">
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+                      <polyline points="20 6 9 17 4 12"/>
+                    </svg>
+                    验证安装
+                  </button>
+                  <button class="btn-secondary">
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+                      <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/>
+                      <polyline points="15 3 21 3 21 9"/>
+                      <line x1="10" y1="14" x2="21" y2="3"/>
+                    </svg>
+                    技能商店
+                  </button>
+                </div>
+              </div>
+
+              <div class="skills-search">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+                  <circle cx="11" cy="11" r="8"/>
+                  <line x1="21" y1="21" x2="16.65" y2="16.65"/>
+                </svg>
+                <input type="text" placeholder="搜索技能名称或描述...">
+              </div>
+
+              <div class="skill-categories">
+                <div class="skill-cat active">全部</div>
+                <div class="skill-cat">办公效率</div>
+                <div class="skill-cat">电商运营</div>
+                <div class="skill-cat">金融投资</div>
+                <div class="skill-cat">开发工具</div>
+                <div class="skill-cat">音视频</div>
+                <div class="skill-cat">数据采集</div>
+                <div class="skill-cat">搜索资讯</div>
+              </div>
+
+              <div class="skills-grid">
+                <div class="skill-item">
+                  <div class="skill-icon" style="background: linear-gradient(135deg, #10B981, #059669)">XL</div>
+                  <div class="skill-info">
+                    <div class="skill-name">Excel 自动化</div>
+                    <div class="skill-desc">批量处理 Excel — 合并、拆分、筛选、去重、转换</div>
+                  </div>
+                  <div class="skill-toggle on"></div>
+                </div>
+
+                <div class="skill-item">
+                  <div class="skill-icon" style="background: linear-gradient(135deg, #6366F1, #4F46E5)">DOC</div>
+                  <div class="skill-info">
+                    <div class="skill-name">文档处理</div>
+                    <div class="skill-desc">读取解析 PDF / DOCX / PPT 等文档,提取关键信息</div>
+                  </div>
+                  <div class="skill-toggle on"></div>
+                </div>
+
+                <div class="skill-item">
+                  <div class="skill-icon" style="background: linear-gradient(135deg, #EF4444, #DC2626)">PDF</div>
+                  <div class="skill-info">
+                    <div class="skill-name">PDF 编辑</div>
+                    <div class="skill-desc">自然语言编辑 PDF — 合并、拆分、加水印、加密</div>
+                  </div>
+                  <div class="skill-toggle"></div>
+                </div>
+
+                <div class="skill-item">
+                  <div class="skill-icon" style="background: linear-gradient(135deg, #F59E0B, #D97706)">OCR</div>
+                  <div class="skill-info">
+                    <div class="skill-name">PDF 扫描转文字</div>
+                    <div class="skill-desc">扫描件 PDF 转 Word,支持中文 OCR 识别</div>
+                  </div>
+                  <div class="skill-toggle"></div>
+                </div>
+
+                <div class="skill-item">
+                  <div class="skill-icon" style="background: linear-gradient(135deg, #8B5CF6, #7C3AED)">SMR</div>
+                  <div class="skill-info">
+                    <div class="skill-name">智能总结</div>
+                    <div class="skill-desc">网页、文档、视频、YouTube 一键提炼摘要</div>
+                  </div>
+                  <div class="skill-toggle on"></div>
+                </div>
+
+                <div class="skill-item">
+                  <div class="skill-icon" style="background: linear-gradient(135deg, #14B8A6, #0D9488)">WPS</div>
+                  <div class="skill-info">
+                    <div class="skill-name">WPS/Word 自动化</div>
+                    <div class="skill-desc">Word 文档自动化 — 替换、插入、合并、导出 PDF</div>
+                  </div>
+                  <div class="skill-toggle"></div>
+                </div>
+
+                <div class="skill-item">
+                  <div class="skill-icon" style="background: linear-gradient(135deg, #EC4899, #DB2777)">PPT</div>
+                  <div class="skill-info">
+                    <div class="skill-name">WPS/PPT 自动化</div>
+                    <div class="skill-desc">PPT 自动化 — 导出、替换文本、统一字体主题</div>
+                  </div>
+                  <div class="skill-toggle"></div>
+                </div>
+
+                <div class="skill-item">
+                  <div class="skill-icon" style="background: linear-gradient(135deg, #06B6D4, #0891B2)">OBS</div>
+                  <div class="skill-info">
+                    <div class="skill-name">Obsidian 笔记</div>
+                    <div class="skill-desc">知识库管理、笔记搜索和自动化</div>
+                  </div>
+                  <div class="skill-toggle"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<script>
+  // 页面切换
+  document.querySelectorAll('.nav-item').forEach(item => {
+    item.addEventListener('click', () => {
+      const target = item.dataset.page;
+      document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
+      item.classList.add('active');
+      document.querySelectorAll('.page-view').forEach(v => v.classList.remove('active'));
+      document.getElementById('page-' + target).classList.add('active');
+      document.querySelector('.showcase-main').scrollTop = 0;
+    });
+  });
+
+  // 登录 Tab 切换
+  document.querySelectorAll('.login-tab').forEach(tab => {
+    tab.addEventListener('click', () => {
+      document.querySelectorAll('.login-tab').forEach(t => t.classList.remove('active'));
+      tab.classList.add('active');
+    });
+  });
+
+  // 技能开关切换演示
+  document.querySelectorAll('.skill-toggle').forEach(toggle => {
+    toggle.addEventListener('click', () => {
+      toggle.classList.toggle('on');
+    });
+  });
+
+  // 模型 Tab 切换
+  document.querySelectorAll('.model-tab').forEach(tab => {
+    tab.addEventListener('click', () => {
+      document.querySelectorAll('.model-tab').forEach(t => t.classList.remove('active'));
+      tab.classList.add('active');
+    });
+  });
+
+  // 充值档位切换
+  document.querySelectorAll('.amount-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.amount-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+    });
+  });
+
+  // Chat Tab 切换
+  document.querySelectorAll('.chat-tab').forEach(tab => {
+    tab.addEventListener('click', () => {
+      document.querySelectorAll('.chat-tab').forEach(t => t.classList.remove('active'));
+      tab.classList.add('active');
+    });
+  });
+
+  // 分类切换
+  document.querySelectorAll('.skill-cat').forEach(cat => {
+    cat.addEventListener('click', () => {
+      document.querySelectorAll('.skill-cat').forEach(c => c.classList.remove('active'));
+      cat.classList.add('active');
+    });
+  });
+</script>
+
+</body>
+</html>

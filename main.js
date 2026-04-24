@@ -45,7 +45,6 @@ const syncLocals = {
 
 // ─── 全局状态 ──────────────────────────────────────────────────────────────
 let mainWindow
-let petWindow = null
 let openclawProc = null
 let openclawStartedAt = null  // ms timestamp；Gateway 首页显示运行时长
 let usbMonitorTimer = null
@@ -808,58 +807,6 @@ app.on('window-all-closed', async () => {
   app.quit()
 })
 
-// ─── Pet Window ────────────────────────────────────────────────────────────
-
-function createPetWindow() {
-  const { width, height } = screen.getPrimaryDisplay().workAreaSize
-  petWindow = new BrowserWindow({
-    width: 220,
-    height: 320,
-    x: width - 230,
-    y: height - 330,
-    transparent: true,
-    frame: false,
-    alwaysOnTop: true,
-    skipTaskbar: true,
-    resizable: false,
-    webPreferences: {
-      preload: path.join(__dirname, 'pet-preload.js'),
-      contextIsolation: true,
-      nodeIntegration: false,
-      sandbox: true
-    }
-  })
-  petWindow.loadFile('pet.html')
-  petWindow.setIgnoreMouseEvents(true, { forward: true })
-  petWindow.on('closed', () => { petWindow = null })
-}
-
-function updatePetStatus(running) {
-  if (petWindow) petWindow.webContents.send('pet-status', { running })
-}
-
-ipcMain.handle('show-pet', () => {
-  if (!petWindow) createPetWindow()
-  else petWindow.show()
-  return { ok: true }
-})
-
-ipcMain.handle('hide-pet', () => {
-  if (petWindow) petWindow.hide()
-  return { ok: true }
-})
-
-ipcMain.on('pet-ignore-mouse', (_, ignore) => {
-  if (!petWindow) return
-  if (ignore) petWindow.setIgnoreMouseEvents(true, { forward: true })
-  else         petWindow.setIgnoreMouseEvents(false)
-})
-
-ipcMain.handle('pet-open-ui', async () => {
-  await openUrl(buildUiUrl())
-  return { ok: true }
-})
-
 // ─── USB Monitor ───────────────────────────────────────────────────────────
 
 function startUsbMonitor() {
@@ -1096,14 +1043,12 @@ ipcMain.handle('start-openclaw', async () => {
     openclawProc.stdout.on('data', onLog)
     openclawProc.stderr.on('data', onLog)
     openclawStartedAt = Date.now()
-    updatePetStatus(true)
 
     const startTime = openclawStartedAt
     openclawProc.on('exit', async (code) => {
       openclawProc = null
       openclawStartedAt = null
       currentGatewayToken = null
-      updatePetStatus(false)
 
       const uptime = Date.now() - startTime
 

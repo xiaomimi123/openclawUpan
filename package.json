@@ -1,7 +1,7 @@
 {
   "name": "openclaw-key",
-  "version": "4.0.0",
-  "description": "OpenClaw 启动器 - USB 钥匙版",
+  "version": "5.0.0-alpha",
+  "description": "OpenClaw 启动器 - 灵境AI 账号登录版",
   "main": "main.js",
   "scripts": {
     "start": "electron .",
@@ -36,12 +36,9 @@
       "src/**",
       "styles/**",
       "preload.js",
-      "pet-preload.js",
       "login-preload.js",
-      "setup.html",
       "launcher.html",
       "login.html",
-      "pet.html",
       "assets/**",
       "node_modules/yauzl/**",
       "node_modules/buffer-crc32/**",

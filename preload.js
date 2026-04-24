@@ -28,10 +28,6 @@ contextBridge.exposeInMainWorld('usb', {
   installSkill:            (npm) => ipcRenderer.invoke('install-skill', npm),
   installFeishuPlugin:     ()   => ipcRenderer.invoke('install-feishu-plugin'),
 
-  // Pet
-  showPet: () => ipcRenderer.invoke('show-pet'),
-  hidePet: () => ipcRenderer.invoke('hide-pet'),
-
   // Utils
   openExternal: (url) => ipcRenderer.invoke('open-external', url),
   openUiWindow:  ()    => ipcRenderer.invoke('open-ui-window'),
