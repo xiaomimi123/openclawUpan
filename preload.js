@@ -73,9 +73,11 @@ contextBridge.exposeInMainWorld('auth', {
   reload:      ()          => ipcRenderer.invoke('auth:reload'),
 
   // token 彻底失效时触发，UI 应跳回登录页
+  // 不用 removeAllListeners（否则 mainWin.onAuthFailed 注册会抹掉这里的回调）
   onAuthFailed: (cb) => {
-    ipcRenderer.removeAllListeners('auth:failed')
-    ipcRenderer.on('auth:failed', () => cb())
+    const handler = () => cb()
+    ipcRenderer.on('auth:failed', handler)
+    return () => ipcRenderer.removeListener('auth:failed', handler)
   },
 })
 
@@ -85,10 +87,11 @@ contextBridge.exposeInMainWorld('mainWin', {
   logout:            () => ipcRenderer.invoke('main-win:logout'),
   // 仅切换窗口，不调 auth 后端（用于 session 失效自救）
   transitionToLogin: () => ipcRenderer.send('main-win:transition-to-login'),
-  // session 失效事件订阅
+  // session 失效事件订阅（与 auth.onAuthFailed 同源，允许并存）
   onAuthFailed: (cb) => {
-    ipcRenderer.removeAllListeners('auth:failed')
-    ipcRenderer.on('auth:failed', () => cb())
+    const handler = () => cb()
+    ipcRenderer.on('auth:failed', handler)
+    return () => ipcRenderer.removeListener('auth:failed', handler)
   },
 })
 

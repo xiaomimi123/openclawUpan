@@ -83,12 +83,11 @@ class AuthManager {
   }
 
   // ─── 内部：ApiClient 调 setCookie 时转发到本实例 ──────────────────────────
+  // 仅更新内存状态；持久化由调用方（login/refresh）统一做一次，避免并发写
   _updateSessionCookie(cookieStr) {
     if (!cookieStr) return
     if (!this.state) this.state = { session: cookieStr, user: null, savedAt: null }
     else this.state.session = cookieStr
-    // 异步保存，不阻塞
-    this.save().catch(() => {})
   }
 
   // ─── 同步 getter ─────────────────────────────────────────────────────────

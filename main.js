@@ -432,6 +432,10 @@ function extractZip(zipPath, destDir, { onProgress, timeout = 5 * 60 * 1000 } = 
     const yauzl = require('yauzl')
     yauzl.open(zipPath, { lazyEntries: true }, (err, zipfile) => {
       if (err) return resolve(false)
+      const finish = (result) => {
+        try { zipfile.close() } catch {}
+        resolve(result)
+      }
       const total = zipfile.entryCount
       let done = 0
 
@@ -443,7 +447,7 @@ function extractZip(zipPath, destDir, { onProgress, timeout = 5 * 60 * 1000 } = 
         const dest = path.join(destDir, entryName)
         if (!path.normalize(dest).startsWith(path.normalize(destDir))) {
           console.error('[extractZip] path traversal blocked:', entryName)
-          return resolve(false)
+          return finish(false)
         }
         if (/\/$/.test(entryName)) {
           fs.mkdirSync(dest, { recursive: true })
@@ -451,17 +455,17 @@ function extractZip(zipPath, destDir, { onProgress, timeout = 5 * 60 * 1000 } = 
         } else {
           fs.mkdirSync(path.dirname(dest), { recursive: true })
           zipfile.openReadStream(entry, (err2, readStream) => {
-            if (err2) return resolve(false)
+            if (err2) return finish(false)
             const ws = fs.createWriteStream(dest)
-            readStream.on('error', () => resolve(false))
+            readStream.on('error', () => finish(false))
             readStream.pipe(ws)
             ws.on('close', () => zipfile.readEntry())
-            ws.on('error', () => resolve(false))
+            ws.on('error', () => finish(false))
           })
         }
       })
-      zipfile.on('end', () => resolve(true))
-      zipfile.on('error', () => resolve(false))
+      zipfile.on('end', () => finish(true))
+      zipfile.on('error', () => finish(false))
     })
   })
   const timeoutPromise = new Promise(r => setTimeout(() => r(false), timeout))
@@ -589,7 +593,9 @@ if (!gotLock) {
 
 function getDiskFreeMB(driveLetter) {
   const { execSync } = require('child_process')
-  const drive = driveLetter.toUpperCase()
+  const drive = String(driveLetter || '').toUpperCase()
+  // 严格白名单：仅允许单个 A-Z 字母，防止任何命令注入
+  if (!/^[A-Z]$/.test(drive)) return NaN
   // 方法 1: wmic（不依赖 PowerShell）
   try {
     const out = execSync(
@@ -1076,7 +1082,7 @@ ipcMain.handle('start-openclaw', async () => {
     const onLog = (d) => {
       const s = d.toString('utf8')
       gatewayLog += s
-      if (gatewayLog.length > LOG_MAX * 2) gatewayLog = gatewayLog.slice(-LOG_MAX)
+      if (gatewayLog.length > LOG_MAX) gatewayLog = gatewayLog.slice(-LOG_MAX)
 
       const result = translateLog(s)
       if (result === null) {
@@ -1410,9 +1416,20 @@ ipcMain.handle('validate-api-key', async (_, { key, provider, baseUrl }) => {
         headers: validatorConfig.headers,
         timeout: 15000,
       }, (res) => {
+        const MAX_BODY = 1024 * 1024  // 1 MB 上限，防止恶意/误配服务商返回超大响应
         let data = ''
-        res.on('data', chunk => data += chunk)
+        let aborted = false
+        res.on('data', chunk => {
+          if (aborted) return
+          data += chunk
+          if (data.length > MAX_BODY) {
+            aborted = true
+            try { req.destroy() } catch {}
+            done({ ok: false, error: '响应过大，已中止（>1MB）' })
+          }
+        })
         res.on('end', () => {
+          if (aborted) return
           if (res.statusCode === 401 || res.statusCode === 403) {
             let msg = 'API Key 无效或已过期'
             try {
@@ -1457,10 +1474,23 @@ ipcMain.handle('check-skill-installed', async (_, skillId) => {
   return { installed }
 })
 
+// 安装命令参数白名单：只允许安全字符（字母数字、@./\-_:+、https 绝对 URL）
+const SKILL_INSTALL_ARG_RE = /^(-y|--yes|install|plugins|[a-zA-Z0-9@._:+\-\/]+|https:\/\/[a-zA-Z0-9._\-\/%+?=&#]+)$/
+const SKILL_INSTALL_CMDS = new Set(['npx', 'openclaw'])
+
 ipcMain.handle('install-skill', async (_, cmdArray) => {
   // cmdArray: ['npx', '-y', 'https://...tgz', 'install'] 或 ['openclaw', 'plugins', 'install', 'name']
   if (!Array.isArray(cmdArray) || cmdArray.length < 2) {
     return { ok: false, error: '无效的安装命令' }
+  }
+  if (!SKILL_INSTALL_CMDS.has(cmdArray[0])) {
+    return { ok: false, error: '不允许的命令前缀: ' + cmdArray[0] }
+  }
+  for (let i = 1; i < cmdArray.length; i++) {
+    const a = cmdArray[i]
+    if (typeof a !== 'string' || !SKILL_INSTALL_ARG_RE.test(a)) {
+      return { ok: false, error: '非法参数: ' + a }
+    }
   }
 
   const nodePath = getNodePath()

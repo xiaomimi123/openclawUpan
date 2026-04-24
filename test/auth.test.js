@@ -278,14 +278,15 @@ async function run() {
     } finally { cleanup() }
   })
 
-  await test('_updateSessionCookie 直接更新 session 并落盘', async () => {
+  await test('_updateSessionCookie 纯内存更新，不自动落盘（避免并发写竞态）', async () => {
     const { authPath, cleanup } = mkTmpAuthPath()
     try {
       const m = new AuthManager({ authPath, apiClient: mockClient() })
       m._updateSessionCookie('session=Y')
       assert.strictEqual(m.getCookieString(), 'session=Y')
-      // save() 是异步的，等一小会儿确保落盘
-      await new Promise(r => setTimeout(r, 50))
+      // 磁盘上还没文件（save 由调用方显式触发）
+      assert.strictEqual(fs.existsSync(authPath), false)
+      await m.save()
       const saved = JSON.parse(fs.readFileSync(authPath, 'utf8'))
       assert.strictEqual(saved.session, 'session=Y')
     } finally { cleanup() }
