@@ -1856,6 +1856,17 @@ function parseSkillFrontmatter(content) {
   return meta
 }
 
+// 支持页：拉客服配置（公开接口）
+ipcMain.handle('support:config', async () => {
+  if (!authManager) return { ok: false, error: { message: 'AuthManager not initialized' } }
+  try {
+    const data = await authManager.apiClient.get('/api/lingjing/config', { auth: false })
+    return { ok: true, data }
+  } catch (e) {
+    return { ok: false, error: { message: e.message, status: e.status || 0 } }
+  }
+})
+
 ipcMain.handle('skills:list', async () => {
   const extRoot = path.join(configDir, 'extensions')
   const skills = []

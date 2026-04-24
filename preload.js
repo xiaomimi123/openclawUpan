@@ -115,3 +115,8 @@ contextBridge.exposeInMainWorld('topup', {
 contextBridge.exposeInMainWorld('skills', {
   list: () => ipcRenderer.invoke('skills:list'),
 })
+
+// ─── V5：联系客服 ────────────────────────────────────────────────────────
+contextBridge.exposeInMainWorld('support', {
+  config: () => ipcRenderer.invoke('support:config'),
+})

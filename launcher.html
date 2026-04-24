@@ -1080,6 +1080,174 @@ body {
 
 /* 聊天工具页 (从这里继续原有样式) */
 
+/* ─── 环境检查页 ─── */
+.env-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  margin-bottom: 18px;
+}
+.env-header .title {
+  font-family: var(--font-display);
+  font-size: 22px;
+  font-weight: 500;
+  margin-bottom: 2px;
+}
+.env-header .subtitle {
+  font-size: 13px;
+  color: var(--text-muted);
+}
+
+.env-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 10px;
+}
+.check-row {
+  background: var(--bg-card);
+  border: 1px solid var(--border-subtle);
+  border-radius: 10px;
+  padding: 14px 18px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+.check-row.warn { border-color: rgba(251, 191, 36, 0.3); background: rgba(251, 191, 36, 0.03); }
+.check-row.fail { border-color: rgba(248, 113, 113, 0.3); background: rgba(248, 113, 113, 0.03); }
+.check-row.ok   { border-color: rgba(74, 222, 128, 0.18); }
+.check-indicator {
+  width: 36px; height: 36px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+.check-indicator.ok   { background: var(--success-dim); color: var(--success); }
+.check-indicator.warn { background: rgba(251, 191, 36, 0.15); color: var(--warning); }
+.check-indicator.fail { background: rgba(248, 113, 113, 0.15); color: var(--danger); }
+.check-body { flex: 1; min-width: 0; }
+.check-label {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: 2px;
+}
+.check-detail {
+  font-size: 12px;
+  color: var(--text-muted);
+  font-family: var(--font-mono);
+}
+.check-action {
+  flex-shrink: 0;
+}
+
+/* ─── 联系客服页 ─── */
+.support-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+@media (max-width: 900px) {
+  .support-grid { grid-template-columns: 1fr; }
+}
+.support-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border-subtle);
+  border-radius: 12px;
+  padding: 22px;
+}
+.support-card h4 {
+  font-family: var(--font-display);
+  font-size: 16px;
+  font-weight: 500;
+  margin-bottom: 12px;
+}
+.support-field {
+  display: flex;
+  justify-content: space-between;
+  padding: 9px 0;
+  border-bottom: 1px solid var(--border-subtle);
+  font-size: 13px;
+}
+.support-field:last-child { border-bottom: none; }
+.support-field .k { color: var(--text-muted); }
+.support-field .v {
+  color: var(--text-primary);
+  font-family: var(--font-mono);
+  font-size: 12px;
+  max-width: 60%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.support-wechat-card {
+  text-align: center;
+  padding: 24px;
+}
+.support-wechat-icon {
+  width: 56px; height: 56px;
+  border-radius: 14px;
+  background: linear-gradient(135deg, #2CB034, #1F8C28);
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 14px;
+}
+.support-wechat-text {
+  font-size: 14px;
+  color: var(--text-secondary);
+  margin-bottom: 10px;
+}
+.support-wechat-id {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 18px;
+  background: var(--bg-input);
+  border: 1px solid var(--border-subtle);
+  border-radius: 8px;
+  font-family: var(--font-mono);
+  font-size: 15px;
+  color: var(--text-primary);
+  margin-bottom: 10px;
+}
+.support-wechat-sub {
+  font-size: 11px;
+  color: var(--text-muted);
+}
+.support-qrcode {
+  max-width: 180px;
+  margin: 14px auto 0;
+  border-radius: 10px;
+  border: 1px solid var(--border-default);
+  background: white;
+  padding: 8px;
+}
+.support-qrcode img { width: 100%; display: block; }
+.support-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 14px;
+  flex-wrap: wrap;
+}
+.diagnostic-box {
+  background: var(--bg-input);
+  border: 1px solid var(--border-subtle);
+  border-radius: 8px;
+  padding: 12px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--text-secondary);
+  line-height: 1.7;
+  margin-top: 10px;
+  white-space: pre-wrap;
+  word-break: break-all;
+  max-height: 180px;
+  overflow-y: auto;
+}
+
 /* ─── 聊天工具页 ─── */
 .chat-tabs {
   display: inline-flex;
@@ -1996,18 +2164,52 @@ body {
       </div>
 
       <div class="page-view" id="page-env">
-        <div class="empty-state">
-          <div class="icon"><svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg></div>
-          <div class="title">环境检查</div>
-          <div class="desc">Node.js / 端口 / 依赖自检。下一步实现。</div>
+        <div class="env-header">
+          <div>
+            <div class="title">环境检查</div>
+            <div class="subtitle">自检 Node / OpenClaw / 端口 / 配置 / 磁盘，发现问题一键修复</div>
+          </div>
+          <button class="btn-sm" id="btn-env-recheck">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></svg>
+            重新检测
+          </button>
+        </div>
+        <div class="env-grid" id="env-grid">
+          <div class="empty-state" style="min-height:200px">
+            <div class="desc">点「重新检测」开始</div>
+          </div>
         </div>
       </div>
 
       <div class="page-view" id="page-support">
-        <div class="empty-state">
-          <div class="icon"><svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 18v-6a9 9 0 0 1 18 0v6"/></svg></div>
+        <div class="models-header">
           <div class="title">联系客服</div>
-          <div class="desc">售后联系方式 + 常见问题。下一步实现。</div>
+          <div class="subtitle">遇到问题？加微信获取技术支持与售后</div>
+        </div>
+
+        <div class="support-grid">
+          <div class="support-card support-wechat-card">
+            <div class="support-wechat-icon">
+              <svg width="28" height="28" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="12" r="10"/></svg>
+            </div>
+            <div class="support-wechat-text" id="support-text">加载客服信息中...</div>
+            <div class="support-wechat-id" id="support-wechat-id" style="display:none">
+              <span id="support-wechat-text">—</span>
+              <button class="btn-sm" id="btn-copy-wechat" style="height:auto;padding:4px 10px;">复制</button>
+            </div>
+            <div class="support-wechat-sub" id="support-wechat-sub"></div>
+            <div id="support-qrcode-wrap" style="display:none"></div>
+          </div>
+
+          <div class="support-card">
+            <h4>诊断信息</h4>
+            <div style="font-size:11px;color:var(--text-muted);margin-bottom:10px">遇到问题时把这段复制给客服，可加快定位。</div>
+            <div class="diagnostic-box" id="diagnostic-box">加载中...</div>
+            <div class="support-actions">
+              <button class="btn-sm" id="btn-copy-diag">复制诊断信息</button>
+              <button class="btn-sm" id="btn-reload-diag">刷新</button>
+            </div>
+          </div>
         </div>
       </div>
 
@@ -3088,6 +3290,160 @@ document.getElementById('skill-categories').addEventListener('click', (e) => {
   document.querySelectorAll('#skill-categories .skill-cat').forEach(c => c.classList.remove('active'))
   cat.classList.add('active')
   recomputeSkillsFilter()
+})
+
+// ─── 环境检查页 ─────────────────────────────────────────────────────
+function statusClass(item) {
+  if (item.ok && !item.warn) return 'ok'
+  if (item.warn) return 'warn'
+  return 'fail'
+}
+function statusIconSvg(cls) {
+  if (cls === 'ok')   return '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><polyline points="20 6 9 17 4 12"/></svg>'
+  if (cls === 'warn') return '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M12 9v3m0 4h.01M12 2L2 22h20L12 2z"/></svg>'
+  return '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>'
+}
+
+async function runPreflight() {
+  const grid = document.getElementById('env-grid')
+  grid.innerHTML = '<div class="empty-state" style="min-height:160px"><div class="desc">检测中...</div></div>'
+  const results = await window.usb.preflightCheck()
+  if (!Array.isArray(results)) {
+    grid.innerHTML = '<div class="empty-state" style="min-height:160px"><div class="desc">检测失败，IPC 无响应</div></div>'
+    return
+  }
+  grid.innerHTML = ''
+  results.forEach(item => {
+    const cls = statusClass(item)
+    const row = document.createElement('div')
+    row.className = 'check-row ' + cls
+    let actionHtml = ''
+    if (item.id === 'config' && cls !== 'ok') {
+      actionHtml = `<button class="btn-sm" data-action="repair-config">一键修复</button>`
+    } else if (item.id === 'port' && cls !== 'ok') {
+      actionHtml = `<button class="btn-sm" data-action="kill-port">释放端口</button>`
+    }
+    row.innerHTML = `
+      <div class="check-indicator ${cls}">${statusIconSvg(cls)}</div>
+      <div class="check-body">
+        <div class="check-label">${escapeHtml(item.label)}</div>
+        <div class="check-detail">${escapeHtml(item.detail || '')}</div>
+      </div>
+      <div class="check-action">${actionHtml}</div>
+    `
+    grid.appendChild(row)
+  })
+}
+
+document.getElementById('btn-env-recheck').addEventListener('click', async () => {
+  const btn = document.getElementById('btn-env-recheck')
+  btn.disabled = true
+  try { await runPreflight() } finally { btn.disabled = false }
+})
+
+document.getElementById('env-grid').addEventListener('click', async (e) => {
+  const btn = e.target.closest('button[data-action]')
+  if (!btn) return
+  btn.disabled = true
+  btn.textContent = '执行中...'
+  try {
+    if (btn.dataset.action === 'repair-config') {
+      const r = await window.usb.repairConfig()
+      if (r && r.ok) showToast('配置已修复', 'success')
+      else showToast('修复失败: ' + (r?.error || '未知'), 'error')
+    } else if (btn.dataset.action === 'kill-port') {
+      const r = await window.usb.killPort(18789)
+      if (r && r.ok) showToast('端口已释放', 'success')
+      else showToast('释放失败: ' + (r?.error || '未知'), 'error')
+    }
+    await runPreflight()
+  } catch (e) {
+    showToast('操作异常: ' + e.message, 'error')
+  }
+})
+
+// 进入环境检查页自动跑一次
+document.getElementById('sidebar-menu').addEventListener('click', (e) => {
+  const mi = e.target.closest('.menu-item')
+  if (mi && mi.dataset.page === 'env') runPreflight()
+})
+
+// ─── 联系客服页 ────────────────────────────────────────────────────
+async function loadSupportPage() {
+  // 客服配置
+  try {
+    const r = await window.support.config()
+    if (r && r.ok && r.data) {
+      const cfg = r.data
+      document.getElementById('support-text').textContent =
+        cfg.customer_service_text || '添加微信，获取帮助'
+      if (cfg.customer_service_wechat) {
+        document.getElementById('support-wechat-id').style.display = 'inline-flex'
+        document.getElementById('support-wechat-text').textContent = cfg.customer_service_wechat
+        document.getElementById('support-wechat-sub').textContent = '添加后请备注"OpenClaw 启动器"'
+      }
+      if (cfg.customer_service_qrcode) {
+        const wrap = document.getElementById('support-qrcode-wrap')
+        wrap.style.display = 'block'
+        wrap.innerHTML = `<div class="support-qrcode"><img src="${escapeHtml(cfg.customer_service_qrcode)}" alt="客服二维码"></div>`
+      }
+    } else {
+      document.getElementById('support-text').textContent = '客服配置暂时不可用'
+    }
+  } catch (e) {
+    document.getElementById('support-text').textContent = '加载客服配置失败'
+  }
+  // 诊断信息
+  await refreshDiagnostic()
+}
+
+async function refreshDiagnostic() {
+  const parts = []
+  parts.push(`启动器版本: ${document.getElementById('app-version').textContent || '-'}`)
+  parts.push(`Electron UA: ${navigator.userAgent}`)
+  parts.push(`平台: ${navigator.platform}`)
+  parts.push(`时间: ${new Date().toISOString()}`)
+  try {
+    const r = await window.auth.getUser()
+    if (r && r.ok && r.data) {
+      const u = r.data
+      parts.push(`用户 ID: ${u.id || '-'}`)
+      parts.push(`用户名: ${u.username || '-'}`)
+      parts.push(`邮箱: ${u.email || '-'}`)
+      parts.push(`分组: ${u.group || 'default'}`)
+      parts.push(`额度: ${u.quota ?? '-'}`)
+      parts.push(`已用: ${u.used_quota ?? '-'}`)
+    }
+  } catch {}
+  try {
+    const s = await window.usb.getOpenclawStatus()
+    parts.push(`Gateway 运行: ${s?.running ? '是' : '否'}${s?.startedAt ? ` (起于 ${new Date(s.startedAt).toISOString()})` : ''}`)
+    parts.push(`Gateway 端口: ${s?.port || 18789}`)
+  } catch {}
+  document.getElementById('diagnostic-box').textContent = parts.join('\n')
+}
+
+document.getElementById('btn-copy-wechat').addEventListener('click', () => {
+  const text = document.getElementById('support-wechat-text').textContent
+  if (!text || text === '—') { showToast('暂无微信号', 'error'); return }
+  navigator.clipboard.writeText(text).then(
+    () => showToast('已复制微信号', 'success'),
+    () => showToast('复制失败', 'error')
+  )
+})
+document.getElementById('btn-copy-diag').addEventListener('click', () => {
+  const text = document.getElementById('diagnostic-box').textContent
+  navigator.clipboard.writeText(text).then(
+    () => showToast('诊断信息已复制', 'success'),
+    () => showToast('复制失败', 'error')
+  )
+})
+document.getElementById('btn-reload-diag').addEventListener('click', () => refreshDiagnostic())
+
+// 进入客服页自动加载
+document.getElementById('sidebar-menu').addEventListener('click', (e) => {
+  const mi = e.target.closest('.menu-item')
+  if (mi && mi.dataset.page === 'support') loadSupportPage()
 })
 
 // ─── 初始化 ────────────────────────────────────────────────────────
