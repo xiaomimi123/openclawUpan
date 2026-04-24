@@ -2301,7 +2301,7 @@ document.getElementById('sidebar-menu').addEventListener('click', (e) => {
 // ─── 跳官网充值：简单稳定，不自己管订单 ───────────────────────────
 // 用户选好套餐 → 打开官网（自动登录态走 cookie）→ 用户在官网完成支付
 // 启动器在此后 10 分钟内每 10 秒刷新一次余额；余额上涨即 toast 提示到账
-const TOPUP_SITE_URL = 'https://aitoken.homes'  // 官网根；如后续有专属 /topup 路径再调整
+const TOPUP_SITE_URL = 'https://aitoken.homes/topup'  // 官网充值页（前端路由 /topup）
 let _topupWatchTimer = null
 function startTopupWatch() {
   if (_topupWatchTimer) clearInterval(_topupWatchTimer)
