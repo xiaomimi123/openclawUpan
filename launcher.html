@@ -1805,6 +1805,10 @@ body {
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg>
               修复
             </button>
+            <button class="btn btn-stop" id="btn-open-ui" disabled title="Gateway 运行时可用">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+              打开控制台
+            </button>
             <button class="btn btn-primary-main" id="btn-launch">
               <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><polygon points="6 4 20 12 6 20 6 4"/></svg>
               <span id="btn-launch-text">启动 Gateway</span>
@@ -2376,6 +2380,8 @@ const gw = {
   uptimeTimer: null,
 }
 
+let _wasRunningOnce = false  // 首次变 running 时自动弹控制台
+
 function setGatewayUI() {
   const title = document.getElementById('gateway-title')
   const line  = document.getElementById('gateway-status-line')
@@ -2385,8 +2391,23 @@ function setGatewayUI() {
   const sideBtn = document.getElementById('btn-gateway')
   const sideBtnText = sideBtn.querySelector('span')
   const topBadge = document.getElementById('gateway-badge')
+  const btnOpenUi = document.getElementById('btn-open-ui')
 
   line.classList.remove('running', 'starting')
+
+  // 打开控制台按钮：只在 running 时启用
+  btnOpenUi.disabled = gw.status !== 'running'
+  btnOpenUi.title = gw.status === 'running' ? '打开 OpenClaw 聊天控制台' : 'Gateway 运行时可用'
+
+  // 首次进入 running → 自动弹出控制台（500ms 延迟等 Gateway 完全 ready）
+  if (gw.status === 'running' && !_wasRunningOnce) {
+    _wasRunningOnce = true
+    setTimeout(() => {
+      try { window.usb.openUiWindow() } catch {}
+    }, 600)
+  }
+  if (gw.status === 'stopped') _wasRunningOnce = false  // 重置，下次 running 再弹
+
 
   if (gw.status === 'running') {
     title.textContent = 'Gateway 运行中'
@@ -2507,6 +2528,12 @@ async function onStopGateway() {
 
 document.getElementById('btn-launch').addEventListener('click', onStartGateway)
 document.getElementById('btn-gateway').addEventListener('click', onStartGateway)
+document.getElementById('btn-open-ui').addEventListener('click', async () => {
+  if (gw.status !== 'running') { showToast('请先启动 Gateway', 'error'); return }
+  try { await window.usb.openUiWindow() } catch (e) {
+    showToast('打开控制台失败: ' + e.message, 'error')
+  }
+})
 document.getElementById('btn-repair').addEventListener('click', async () => {
   const btn = document.getElementById('btn-repair')
   btn.disabled = true
