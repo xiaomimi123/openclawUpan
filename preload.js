@@ -110,3 +110,8 @@ contextBridge.exposeInMainWorld('topup', {
   orderStatus:  (orderNo)      => ipcRenderer.invoke('topup:order-status', orderNo),
   redeem:       (key)          => ipcRenderer.invoke('topup:redeem', key),
 })
+
+// ─── V5：技能管理 ────────────────────────────────────────────────────────
+contextBridge.exposeInMainWorld('skills', {
+  list: () => ipcRenderer.invoke('skills:list'),
+})

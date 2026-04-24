@@ -945,6 +945,141 @@ body {
 .topup-sub .label { opacity: 0.7; }
 .topup-sub .value { margin-left: 6px; }
 
+/* ─── 技能管理页 ─── */
+.skills-toolbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 14px;
+}
+.skills-stats { display: flex; align-items: baseline; gap: 10px; }
+.skills-stats .big {
+  font-family: var(--font-display);
+  font-size: 28px;
+  font-weight: 500;
+  letter-spacing: -0.02em;
+}
+.skills-stats .sub {
+  font-size: 12px;
+  color: var(--text-muted);
+}
+.skills-actions { display: flex; gap: 8px; }
+
+.skills-search {
+  position: relative;
+  margin-bottom: 14px;
+}
+.skills-search input {
+  width: 100%;
+  height: 40px;
+  background: var(--bg-card);
+  border: 1px solid var(--border-subtle);
+  border-radius: 8px;
+  padding: 0 14px 0 40px;
+  color: var(--text-primary);
+  font-size: 13px;
+  font-family: inherit;
+  outline: none;
+}
+.skills-search input:focus { border-color: var(--brand); box-shadow: 0 0 0 3px var(--brand-dim); }
+.skills-search svg {
+  position: absolute;
+  left: 14px; top: 12px;
+  color: var(--text-muted);
+  pointer-events: none;
+}
+
+.skill-categories {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 16px;
+}
+.skill-cat {
+  padding: 6px 14px;
+  font-size: 12px;
+  color: var(--text-secondary);
+  background: var(--bg-card);
+  border: 1px solid var(--border-subtle);
+  border-radius: 20px;
+  cursor: pointer;
+  transition: all 0.15s;
+  white-space: nowrap;
+  font-weight: 500;
+  user-select: none;
+}
+.skill-cat:hover {
+  border-color: var(--border-default);
+  color: var(--text-primary);
+}
+.skill-cat.active {
+  background: var(--bg-elevated);
+  border-color: var(--brand);
+  color: var(--brand);
+}
+
+.skills-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+.skill-item {
+  background: var(--bg-card);
+  border: 1px solid var(--border-subtle);
+  border-radius: 10px;
+  padding: 12px 14px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  transition: all 0.15s;
+}
+.skill-item:hover {
+  background: var(--bg-card-hover);
+  border-color: var(--border-default);
+}
+.skill-icon {
+  width: 38px; height: 38px;
+  border-radius: 9px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: 12px;
+  color: white;
+  letter-spacing: -0.02em;
+}
+.skill-info { flex: 1; min-width: 0; }
+.skill-name {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: 2px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.skill-desc {
+  font-size: 11px;
+  color: var(--text-muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.skill-source-badge {
+  font-size: 9px;
+  padding: 2px 7px;
+  border-radius: 3px;
+  background: var(--bg-elevated);
+  color: var(--text-muted);
+  font-family: var(--font-mono);
+  letter-spacing: 0.05em;
+  flex-shrink: 0;
+}
+
+/* 聊天工具页 (从这里继续原有样式) */
+
 /* ─── 聊天工具页 ─── */
 .chat-tabs {
   display: inline-flex;
@@ -1825,10 +1960,38 @@ body {
       </div>
 
       <div class="page-view" id="page-skills">
-        <div class="empty-state">
-          <div class="icon"><svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M20 7h-9M14 17H5"/><circle cx="17" cy="17" r="3"/><circle cx="7" cy="7" r="3"/></svg></div>
-          <div class="title">技能管理</div>
-          <div class="desc">浏览/启用 AI 技能。下一步实现。</div>
+        <div class="skills-toolbar">
+          <div class="skills-stats">
+            <span class="big" id="skills-total">0</span>
+            <span class="sub">个已安装技能</span>
+          </div>
+          <div class="skills-actions">
+            <button class="btn-sm" id="btn-skills-refresh">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></svg>
+              刷新
+            </button>
+            <button class="btn-sm" id="btn-skills-store">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+              技能商店
+            </button>
+          </div>
+        </div>
+
+        <div class="skills-search">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+          <input type="text" id="skills-search-input" placeholder="搜索技能名称或描述...">
+        </div>
+
+        <div class="skill-categories" id="skill-categories">
+          <div class="skill-cat active" data-cat="__all__">全部</div>
+        </div>
+
+        <div class="skills-grid" id="skills-grid">
+          <div class="empty-state" style="grid-column:1/-1">
+            <div class="icon"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M20 7h-9M14 17H5"/><circle cx="17" cy="17" r="3"/><circle cx="7" cy="7" r="3"/></svg></div>
+            <div class="title">扫描中...</div>
+            <div class="desc">正在读取已安装的技能列表。</div>
+          </div>
         </div>
       </div>
 
@@ -2776,6 +2939,155 @@ document.getElementById('btn-install-feishu').addEventListener('click', async ()
 // Telegram 文档链接
 document.getElementById('btn-telegram-docs').addEventListener('click', () => {
   window.usb.openExternal('https://core.telegram.org/bots#how-do-i-create-a-bot')
+})
+
+// ─── 技能管理页 ─────────────────────────────────────────────────────
+const skillsPage = {
+  all: [],
+  filtered: [],
+  categories: [],
+  activeCat: '__all__',
+  query: '',
+  loaded: false,
+}
+
+// 根据字符串稳定生成一组渐变色
+const SKILL_GRADIENTS = [
+  ['#10B981', '#059669'], ['#6366F1', '#4F46E5'], ['#EF4444', '#DC2626'],
+  ['#F59E0B', '#D97706'], ['#8B5CF6', '#7C3AED'], ['#14B8A6', '#0D9488'],
+  ['#EC4899', '#DB2777'], ['#06B6D4', '#0891B2'], ['#F97316', '#EA580C'],
+  ['#3B82F6', '#2563EB'], ['#84CC16', '#65A30D'], ['#A855F7', '#9333EA'],
+]
+function skillGradient(key) {
+  let hash = 0
+  for (let i = 0; i < key.length; i++) hash = (hash * 31 + key.charCodeAt(i)) | 0
+  const g = SKILL_GRADIENTS[Math.abs(hash) % SKILL_GRADIENTS.length]
+  return `linear-gradient(135deg, ${g[0]}, ${g[1]})`
+}
+function skillInitials(name) {
+  // 取前 2 位英文字母/数字；没有就用第 1 个字符
+  const chars = name.replace(/[^a-zA-Z0-9]/g, '').slice(0, 3).toUpperCase()
+  if (chars.length >= 2) return chars.slice(0, 3)
+  return name.slice(0, 2).toUpperCase()
+}
+
+function renderSkillCategories() {
+  const box = document.getElementById('skill-categories')
+  box.innerHTML = ''
+  const all = document.createElement('div')
+  all.className = 'skill-cat' + (skillsPage.activeCat === '__all__' ? ' active' : '')
+  all.dataset.cat = '__all__'
+  all.textContent = `全部 (${skillsPage.all.length})`
+  box.appendChild(all)
+  skillsPage.categories.forEach(c => {
+    const el = document.createElement('div')
+    el.className = 'skill-cat' + (skillsPage.activeCat === c.key ? ' active' : '')
+    el.dataset.cat = c.key
+    el.textContent = `${c.label} (${c.count})`
+    box.appendChild(el)
+  })
+}
+
+function renderSkillsGrid() {
+  const grid = document.getElementById('skills-grid')
+  grid.innerHTML = ''
+  if (!skillsPage.filtered.length) {
+    grid.innerHTML = `
+      <div class="empty-state" style="grid-column:1/-1">
+        <div class="icon"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></div>
+        <div class="title">${skillsPage.all.length ? '没有匹配的技能' : '还没安装任何技能'}</div>
+        <div class="desc">${skillsPage.all.length ? '换个关键词或清空筛选' : '点右上角「技能商店」去浏览可用技能。'}</div>
+      </div>
+    `
+    return
+  }
+  skillsPage.filtered.forEach(s => {
+    const el = document.createElement('div')
+    el.className = 'skill-item'
+    el.innerHTML = `
+      <div class="skill-icon" style="background:${skillGradient(s.id)}">${escapeHtml(skillInitials(s.name))}</div>
+      <div class="skill-info">
+        <div class="skill-name">${escapeHtml(s.name)}</div>
+        <div class="skill-desc">${escapeHtml(s.description)}</div>
+      </div>
+      <div class="skill-source-badge">${escapeHtml(s.source.slice(0, 14))}</div>
+    `
+    grid.appendChild(el)
+  })
+}
+
+function recomputeSkillsFilter() {
+  const q = skillsPage.query.toLowerCase()
+  skillsPage.filtered = skillsPage.all.filter(s => {
+    if (skillsPage.activeCat !== '__all__' && s.source !== skillsPage.activeCat) return false
+    if (q) {
+      const hay = (s.name + ' ' + s.description + ' ' + s.id).toLowerCase()
+      if (!hay.includes(q)) return false
+    }
+    return true
+  })
+  document.getElementById('skills-total').textContent = String(skillsPage.filtered.length)
+  renderSkillsGrid()
+}
+
+async function loadSkillsPage({ force = false } = {}) {
+  if (skillsPage.loaded && !force) return
+  skillsPage.loaded = true
+  const r = await window.skills.list()
+  console.log('[skills] list ->', r)
+  if (!r || !r.ok) {
+    showToast('加载技能失败: ' + (r?.error?.message || ''), 'error')
+    return
+  }
+  skillsPage.all = r.data || []
+  // 统计来源分类
+  const bySource = {}
+  skillsPage.all.forEach(s => { bySource[s.source] = (bySource[s.source] || 0) + 1 })
+  skillsPage.categories = Object.entries(bySource)
+    .sort((a, b) => b[1] - a[1])
+    .map(([key, count]) => ({ key, label: key, count }))
+  renderSkillCategories()
+  recomputeSkillsFilter()
+}
+
+// 进入技能页加载
+document.getElementById('sidebar-menu').addEventListener('click', (e) => {
+  const mi = e.target.closest('.menu-item')
+  if (mi && mi.dataset.page === 'skills') loadSkillsPage()
+})
+
+// 刷新按钮
+document.getElementById('btn-skills-refresh').addEventListener('click', async () => {
+  const btn = document.getElementById('btn-skills-refresh')
+  btn.disabled = true
+  try {
+    await loadSkillsPage({ force: true })
+    showToast('技能列表已刷新', 'success')
+  } finally {
+    btn.disabled = false
+  }
+})
+
+// 技能商店
+document.getElementById('btn-skills-store').addEventListener('click', () => {
+  if (window.usb && window.usb.openSkillStore) window.usb.openSkillStore()
+  else showToast('技能商店未加载', 'error')
+})
+
+// 搜索
+document.getElementById('skills-search-input').addEventListener('input', (e) => {
+  skillsPage.query = e.target.value.trim()
+  recomputeSkillsFilter()
+})
+
+// 分类切换
+document.getElementById('skill-categories').addEventListener('click', (e) => {
+  const cat = e.target.closest('.skill-cat')
+  if (!cat) return
+  skillsPage.activeCat = cat.dataset.cat
+  document.querySelectorAll('#skill-categories .skill-cat').forEach(c => c.classList.remove('active'))
+  cat.classList.add('active')
+  recomputeSkillsFilter()
 })
 
 // ─── 初始化 ────────────────────────────────────────────────────────

@@ -1829,6 +1829,70 @@ ipcMain.handle('topup:redeem', topupErrWrap(async (_e, key) => {
   return await authManager.apiClient.post('/api/user/topup', { key })
 }))
 
+// ─── IPC: V5 技能列表（扫描已安装技能）──────────────────────────────────
+// SKILL.md 格式：以 --- 包住的 YAML frontmatter，包含 name / description 等字段
+function parseSkillFrontmatter(content) {
+  const m = content.match(/^---\s*\n([\s\S]*?)\n---/)
+  if (!m) return {}
+  const body = m[1]
+  const meta = {}
+  let currentKey = null
+  let currentVal = []
+  const flush = () => {
+    if (currentKey) meta[currentKey] = currentVal.join('\n').trim()
+  }
+  for (const line of body.split(/\r?\n/)) {
+    const kv = line.match(/^([a-zA-Z_][\w-]*)\s*:\s*(.*)$/)
+    if (kv) {
+      flush()
+      currentKey = kv[1]
+      const v = kv[2].trim()
+      currentVal = v === '|' || v === '|-' || v === '' ? [] : [v]
+    } else if (currentKey) {
+      currentVal.push(line.replace(/^\s{2,}/, ''))
+    }
+  }
+  flush()
+  return meta
+}
+
+ipcMain.handle('skills:list', async () => {
+  const extRoot = path.join(configDir, 'extensions')
+  const skills = []
+  try {
+    if (!fs.existsSync(extRoot)) return { ok: true, data: [] }
+    const pluginDirs = fs.readdirSync(extRoot, { withFileTypes: true })
+      .filter(d => d.isDirectory() && !d.name.startsWith('.'))
+    for (const plug of pluginDirs) {
+      const skillsDir = path.join(extRoot, plug.name, 'skills')
+      if (!fs.existsSync(skillsDir)) continue
+      const skillDirs = fs.readdirSync(skillsDir, { withFileTypes: true })
+        .filter(d => d.isDirectory())
+      for (const s of skillDirs) {
+        const skillMd = path.join(skillsDir, s.name, 'SKILL.md')
+        if (!fs.existsSync(skillMd)) continue
+        let meta = {}
+        try {
+          const content = await fs.promises.readFile(skillMd, 'utf8')
+          meta = parseSkillFrontmatter(content)
+        } catch {}
+        const desc = (meta.description || '').split(/\n/)[0].trim()
+        skills.push({
+          id: s.name,
+          name: meta.name || s.name,
+          description: desc || '—',
+          source: plug.name,
+          path: path.join(skillsDir, s.name),
+        })
+      }
+    }
+    skills.sort((a, b) => (a.source + a.name).localeCompare(b.source + b.name))
+    return { ok: true, data: skills }
+  } catch (e) {
+    return { ok: false, error: { message: e.message } }
+  }
+})
+
 // ─── IPC: Preflight check ─────────────────────────────────────────────────
 
 function checkPortFreeOn(port, host) {
