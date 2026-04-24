@@ -1,12 +1,12 @@
 {
   "name": "openclaw-key",
-  "version": "4.0.0",
-  "description": "OpenClaw 启动器 - USB 钥匙版",
+  "version": "5.0.0-alpha",
+  "description": "OpenClaw 启动器 - 灵境AI 账号登录版",
   "main": "main.js",
   "scripts": {
     "start": "electron .",
     "build": "electron-builder --win portable --x64",
-    "test": "node test/log-translate.test.js && node test/config.test.js"
+    "test": "node test/log-translate.test.js && node test/config.test.js && node test/api-client.test.js && node test/auth.test.js"
   },
   "dependencies": {
     "yauzl": "~2.10.0"
@@ -36,10 +36,9 @@
       "src/**",
       "styles/**",
       "preload.js",
-      "pet-preload.js",
-      "setup.html",
+      "login-preload.js",
       "launcher.html",
-      "pet.html",
+      "login.html",
       "assets/**",
       "node_modules/yauzl/**",
       "node_modules/buffer-crc32/**",

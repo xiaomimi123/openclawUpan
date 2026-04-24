@@ -28,13 +28,6 @@ contextBridge.exposeInMainWorld('usb', {
   installSkill:            (npm) => ipcRenderer.invoke('install-skill', npm),
   installFeishuPlugin:     ()   => ipcRenderer.invoke('install-feishu-plugin'),
 
-  // Support
-  getLicenseInfo: () => ipcRenderer.invoke('get-license-info'),
-
-  // Pet
-  showPet: () => ipcRenderer.invoke('show-pet'),
-  hidePet: () => ipcRenderer.invoke('hide-pet'),
-
   // Utils
   openExternal: (url) => ipcRenderer.invoke('open-external', url),
   openUiWindow:  ()    => ipcRenderer.invoke('open-ui-window'),
@@ -62,4 +55,67 @@ contextBridge.exposeInMainWorld('usb', {
     ipcRenderer.removeAllListeners('openclaw-auto-restart')
     ipcRenderer.on('openclaw-auto-restart', () => cb())
   }
+})
+
+// ─── V5：登录/注册/token 管理（独立命名空间 window.auth）─────────────────
+contextBridge.exposeInMainWorld('auth', {
+  sendCode:    (email)     => ipcRenderer.invoke('auth:send-code', email),
+  register:    (payload)   => ipcRenderer.invoke('auth:register', payload),
+  login:       (payload)   => ipcRenderer.invoke('auth:login', payload),
+  logout:      ()          => ipcRenderer.invoke('auth:logout'),
+  isLoggedIn:  ()          => ipcRenderer.invoke('auth:is-logged-in'),
+  getUser:     ()          => ipcRenderer.invoke('auth:get-user'),
+  refreshUser: ()          => ipcRenderer.invoke('auth:refresh-user'),
+  reload:      ()          => ipcRenderer.invoke('auth:reload'),
+
+  // token 彻底失效时触发，UI 应跳回登录页
+  // 不用 removeAllListeners（否则 mainWin.onAuthFailed 注册会抹掉这里的回调）
+  onAuthFailed: (cb) => {
+    const handler = () => cb()
+    ipcRenderer.on('auth:failed', handler)
+    return () => ipcRenderer.removeListener('auth:failed', handler)
+  },
+})
+
+// ─── V5：主窗口生命周期控制 ────────────────────────────────────────────
+contextBridge.exposeInMainWorld('mainWin', {
+  // 退出登录：调后端 logout + 清 auth.json + 关主窗 + 开登录窗
+  logout:            () => ipcRenderer.invoke('main-win:logout'),
+  // 仅切换窗口，不调 auth 后端（用于 session 失效自救）
+  transitionToLogin: () => ipcRenderer.send('main-win:transition-to-login'),
+  // session 失效事件订阅（与 auth.onAuthFailed 同源，允许并存）
+  onAuthFailed: (cb) => {
+    const handler = () => cb()
+    ipcRenderer.on('auth:failed', handler)
+    return () => ipcRenderer.removeListener('auth:failed', handler)
+  },
+})
+
+// ─── V5：模型配置（官方 token 管理 + 上架模型目录）─────────────────────
+contextBridge.exposeInMainWorld('models', {
+  // 拉已有 token，为空时自动创建一个
+  listOrCreateToken: () => ipcRenderer.invoke('token:list-or-create'),
+  // 重置 token（删旧 + 建新）
+  resetToken:        () => ipcRenderer.invoke('token:reset'),
+  // 官方上架的模型目录（公开接口）
+  listOfficial:      () => ipcRenderer.invoke('models:list-official'),
+})
+
+// ─── V5：充值（灵境AI 聚合支付） ────────────────────────────────────────
+contextBridge.exposeInMainWorld('topup', {
+  listPlans:    ()             => ipcRenderer.invoke('topup:list-plans'),
+  payConfig:    ()             => ipcRenderer.invoke('topup:pay-config'),
+  createOrder:  (payload)      => ipcRenderer.invoke('topup:create-order', payload),
+  orderStatus:  (orderNo)      => ipcRenderer.invoke('topup:order-status', orderNo),
+  redeem:       (key)          => ipcRenderer.invoke('topup:redeem', key),
+})
+
+// ─── V5：技能管理 ────────────────────────────────────────────────────────
+contextBridge.exposeInMainWorld('skills', {
+  list: () => ipcRenderer.invoke('skills:list'),
+})
+
+// ─── V5：联系客服 ────────────────────────────────────────────────────────
+contextBridge.exposeInMainWorld('support', {
+  config: () => ipcRenderer.invoke('support:config'),
 })

@@ -1,4 +1,46 @@
-# OpenClaw 启动器（USB 钥匙版）更新日志
+# OpenClaw 启动器更新日志
+
+---
+
+## v5.0.0-alpha (2026-04-24)
+
+**架构重构**：从 USB 钥匙（ECDSA 签名）改为灵境AI 账号登录模式。
+
+### 新增
+- **账号登录体系**：邮箱+密码登录，cookie session 模式（30 天有效）
+  - 注册 / 登录 / 退出登录 / session 自动持久化到 U 盘 `auth.json`
+  - 验证码发送（灵境后端邮件）
+- **多页主窗口**（1180×740）按 v5 设计稿重构：
+  - 首页 · Gateway 控制中心：启/停 / 修复 / 打开控制台 + 4 个状态卡 + 日志面板
+  - 模型配置：官方模型网格（7 个上架模型）/ 自定义 API Key
+  - 模型充值：4 个套餐 / 跳官网充值 / 兑换码 / 自动检测到账
+  - 聊天工具：微信 / Telegram / 飞书 三 Tab 一键安装
+  - 技能管理：9 个已安装技能扫描 + 搜索 + 分类筛选
+  - 环境检查：Preflight 5 项自检 + 一键修复
+  - 联系客服：拉灵境后端客服配置 + 诊断信息一键复制
+  - 设置：账户信息 / 退出登录 / 版本信息
+- **独立登录窗**（480×640）：登录/注册 Tab + 60 秒验证码倒计时 + 运行日志面板
+
+### 中转站对接
+- `https://aitoken.homes`（灵境AI / new-api 分支）
+- 认证 `/api/user/*` / 模型 `/api/lingjing/model-prices` / 充值 `/api/lingjing/pay/*` / 令牌 `/api/token/*`
+- AI 代理走 `/v1/chat/completions` 与 sk-xxx token
+
+### 安全加固
+- 自实现 `node:https.request` HTTP 客户端，绕过 Electron Chromium 对 Set-Cookie 的过滤
+- `install-skill` IPC 参数严格白名单（只允许 npx / openclaw + 安全字符）
+- `getDiskFreeMB` drive letter 严格 `/^[A-Z]$/` 校验
+- `validate-api-key` 响应体 1MB 上限
+- `onAuthFailed` 事件订阅修复：`window.auth` 与 `window.mainWin` 可并存（旧逻辑互相覆盖）
+
+### 移除
+- ECDSA 授权体系（`src/license.js` / `public.pem` / `license.key` / `sign-usb.js` / 授权 U 盘 PS1/BAT 工具）
+- `setup.html` 首次配置页（V5 登录流程取代）
+- 桌宠窗口（`pet.html` / `pet-preload.js` / `show-pet` / `hide-pet` IPC）
+
+### 测试
+- 64 个单元测试覆盖 log-translate / config / api-client / auth 四大模块
+- 端到端验证：登录 → 模型选择 → 配置 sync 到 agent → Gateway 启动 → openclaw 控制台打开 → AI 正常回复
 
 ---
 

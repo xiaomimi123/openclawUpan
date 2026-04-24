@@ -17,8 +17,8 @@ const {
 } = require('./src/config')
 
 const { translateLog } = require('./src/log-translate')
-const { getVolSerial, verifyLicense } = require('./src/license')
 const { syncFromUsb, syncToUsb } = require('./src/usb-sync')
+const { AuthManager } = require('./src/auth')
 
 const APP_VERSION = require('./package.json').version
 
@@ -45,14 +45,37 @@ const syncLocals = {
 
 // ─── 全局状态 ──────────────────────────────────────────────────────────────
 let mainWindow
-let petWindow = null
 let openclawProc = null
+let openclawStartedAt = null  // ms timestamp；Gateway 首页显示运行时长
 let usbMonitorTimer = null
 let currentGatewayToken = null
 let startingOpenclaw = false
 let pluginRetryPhase = 0        // 0=正常, 1=已同步注册重试, 2=已逐个隔离, 3=已全部禁用
 
+// V5 登录态管理器（app.whenReady 后初始化）
+let authManager = null
+
+// V5 登录窗口（未登录时显示；登录成功后关闭并创建主窗口）
+let loginWindow = null
+
 const sendLog = (msg) => mainWindow?.webContents.send('openclaw-log', msg)
+
+// 向所有窗口广播 auth 事件（登录失效等）
+function broadcastAuthEvent(channel) {
+  for (const w of BrowserWindow.getAllWindows()) {
+    try { w.webContents.send(channel) } catch {}
+  }
+}
+
+// 往登录窗推送一条诊断日志（entry = { level, message }）
+function pushLoginDebug(level, message) {
+  if (loginWindow && !loginWindow.isDestroyed()) {
+    try { loginWindow.webContents.send('login-win:debug-log', { level, message }) } catch {}
+  }
+  // 同时 console 输出，便于终端看（auth 前缀 -- 登录窗或主窗都可能触发）
+  if (level === 'error') console.error('[auth]', message)
+  else console.log('[auth]', message)
+}
 
 // ─── 插件注册 ────────────────────────────────────────────────────────────
 // openclaw 的插件系统依赖 openclaw.json 中三个字段协同工作：
@@ -408,6 +431,10 @@ function extractZip(zipPath, destDir, { onProgress, timeout = 5 * 60 * 1000 } = 
     const yauzl = require('yauzl')
     yauzl.open(zipPath, { lazyEntries: true }, (err, zipfile) => {
       if (err) return resolve(false)
+      const finish = (result) => {
+        try { zipfile.close() } catch {}
+        resolve(result)
+      }
       const total = zipfile.entryCount
       let done = 0
 
@@ -419,7 +446,7 @@ function extractZip(zipPath, destDir, { onProgress, timeout = 5 * 60 * 1000 } = 
         const dest = path.join(destDir, entryName)
         if (!path.normalize(dest).startsWith(path.normalize(destDir))) {
           console.error('[extractZip] path traversal blocked:', entryName)
-          return resolve(false)
+          return finish(false)
         }
         if (/\/$/.test(entryName)) {
           fs.mkdirSync(dest, { recursive: true })
@@ -427,17 +454,17 @@ function extractZip(zipPath, destDir, { onProgress, timeout = 5 * 60 * 1000 } = 
         } else {
           fs.mkdirSync(path.dirname(dest), { recursive: true })
           zipfile.openReadStream(entry, (err2, readStream) => {
-            if (err2) return resolve(false)
+            if (err2) return finish(false)
             const ws = fs.createWriteStream(dest)
-            readStream.on('error', () => resolve(false))
+            readStream.on('error', () => finish(false))
             readStream.pipe(ws)
             ws.on('close', () => zipfile.readEntry())
-            ws.on('error', () => resolve(false))
+            ws.on('error', () => finish(false))
           })
         }
       })
-      zipfile.on('end', () => resolve(true))
-      zipfile.on('error', () => resolve(false))
+      zipfile.on('end', () => finish(true))
+      zipfile.on('error', () => finish(false))
     })
   })
   const timeoutPromise = new Promise(r => setTimeout(() => r(false), timeout))
@@ -457,16 +484,57 @@ async function copyDirFallback(src, dest) {
 
 // ─── Window ────────────────────────────────────────────────────────────────
 
+function createLoginWindow() {
+  if (loginWindow && !loginWindow.isDestroyed()) {
+    loginWindow.focus()
+    return
+  }
+  loginWindow = new BrowserWindow({
+    width: 480,
+    height: 640,
+    resizable: false,
+    maximizable: false,
+    minimizable: true,
+    frame: false,
+    backgroundColor: '#0F1218',
+    show: false,
+    center: true,
+    webPreferences: {
+      preload: path.join(__dirname, 'login-preload.js'),
+      contextIsolation: true,
+      nodeIntegration: false,
+      sandbox: true,
+    },
+  })
+
+  loginWindow.loadFile('login.html')
+  loginWindow.once('ready-to-show', () => loginWindow.show())
+  loginWindow.on('closed', () => { loginWindow = null })
+}
+
+// 登录成功后：关闭登录窗 → 打开主窗口
+function transitionLoginToMain() {
+  createWindow()
+  if (loginWindow && !loginWindow.isDestroyed()) {
+    loginWindow.close()
+  }
+}
+
 function createWindow() {
+  if (mainWindow && !mainWindow.isDestroyed()) {
+    mainWindow.focus()
+    return
+  }
   mainWindow = new BrowserWindow({
-    width: 860,
-    height: 620,
-    minWidth: 760,
-    minHeight: 520,
+    width: 1180,
+    height: 740,
+    minWidth: 1080,
+    minHeight: 680,
     resizable: true,
     frame: false,
-    backgroundColor: '#0f0f23',
+    backgroundColor: '#08090D',
     show: false,
+    center: true,
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),
       contextIsolation: true,
@@ -475,9 +543,17 @@ function createWindow() {
     }
   })
 
-  const hasSetup = fs.existsSync(setupFile)
-  mainWindow.loadFile(hasSetup ? 'launcher.html' : 'setup.html')
+  mainWindow.loadFile('launcher.html')
   mainWindow.once('ready-to-show', () => mainWindow.show())
+  mainWindow.on('closed', () => { mainWindow = null })
+}
+
+// 登出 / session 失效：关主窗，打开登录窗
+function transitionMainToLogin() {
+  createLoginWindow()
+  if (mainWindow && !mainWindow.isDestroyed()) {
+    mainWindow.close()
+  }
 }
 
 // ─── 单实例锁 ─────────────────────────────────────────────────────────────
@@ -486,17 +562,28 @@ if (!gotLock) {
   app.quit()
 } else {
   app.on('second-instance', () => {
-    // 第二个实例启动时，聚焦已有窗口
-    if (mainWindow) {
-      if (mainWindow.isMinimized()) mainWindow.restore()
-      mainWindow.focus()
+    // 第二个实例启动时，聚焦已有窗口（登录窗或主窗口）
+    const w = loginWindow || mainWindow
+    if (w && !w.isDestroyed()) {
+      if (w.isMinimized()) w.restore()
+      w.focus()
     }
   })
 
   app.whenReady().then(async () => {
-    if (!await verifyLicense()) return
     ensureOpenclawShim()
-    createWindow()
+    // V5：AuthManager 单例，持久化到 U 盘 auth.json
+    authManager = new AuthManager({
+      authPath: path.join(usbRoot, 'auth.json'),
+      onAuthFailed: () => broadcastAuthEvent('auth:failed'),
+    })
+    await authManager.load()
+    // 未登录 → 登录窗；已登录 → 直接主窗口
+    if (authManager.isLoggedIn()) {
+      createWindow()
+    } else {
+      createLoginWindow()
+    }
     startUsbMonitor()
   })
 }
@@ -505,7 +592,9 @@ if (!gotLock) {
 
 function getDiskFreeMB(driveLetter) {
   const { execSync } = require('child_process')
-  const drive = driveLetter.toUpperCase()
+  const drive = String(driveLetter || '').toUpperCase()
+  // 严格白名单：仅允许单个 A-Z 字母，防止任何命令注入
+  if (!/^[A-Z]$/.test(drive)) return NaN
   // 方法 1: wmic（不依赖 PowerShell）
   try {
     const out = execSync(
@@ -718,58 +807,6 @@ app.on('window-all-closed', async () => {
   app.quit()
 })
 
-// ─── Pet Window ────────────────────────────────────────────────────────────
-
-function createPetWindow() {
-  const { width, height } = screen.getPrimaryDisplay().workAreaSize
-  petWindow = new BrowserWindow({
-    width: 220,
-    height: 320,
-    x: width - 230,
-    y: height - 330,
-    transparent: true,
-    frame: false,
-    alwaysOnTop: true,
-    skipTaskbar: true,
-    resizable: false,
-    webPreferences: {
-      preload: path.join(__dirname, 'pet-preload.js'),
-      contextIsolation: true,
-      nodeIntegration: false,
-      sandbox: true
-    }
-  })
-  petWindow.loadFile('pet.html')
-  petWindow.setIgnoreMouseEvents(true, { forward: true })
-  petWindow.on('closed', () => { petWindow = null })
-}
-
-function updatePetStatus(running) {
-  if (petWindow) petWindow.webContents.send('pet-status', { running })
-}
-
-ipcMain.handle('show-pet', () => {
-  if (!petWindow) createPetWindow()
-  else petWindow.show()
-  return { ok: true }
-})
-
-ipcMain.handle('hide-pet', () => {
-  if (petWindow) petWindow.hide()
-  return { ok: true }
-})
-
-ipcMain.on('pet-ignore-mouse', (_, ignore) => {
-  if (!petWindow) return
-  if (ignore) petWindow.setIgnoreMouseEvents(true, { forward: true })
-  else         petWindow.setIgnoreMouseEvents(false)
-})
-
-ipcMain.handle('pet-open-ui', async () => {
-  await openUrl(buildUiUrl())
-  return { ok: true }
-})
-
 // ─── USB Monitor ───────────────────────────────────────────────────────────
 
 function startUsbMonitor() {
@@ -801,6 +838,7 @@ function killOpenclaw() {
   const proc = openclawProc
   const pid = proc.pid
   openclawProc = null
+  openclawStartedAt = null
 
   // 等子进程真正 exit 再 resolve，让调用方可以安全地做写回操作
   const exitPromise = new Promise(resolve => {
@@ -906,7 +944,9 @@ ipcMain.handle('save-setup', async (_, setup) => {
 // ─── IPC: Start / Stop OpenClaw ──────────────────────────────────────────
 
 ipcMain.handle('get-openclaw-status', () => ({
-  running: openclawProc !== null
+  running: openclawProc !== null,
+  startedAt: openclawStartedAt,
+  port: 18789,
 }))
 
 ipcMain.handle('start-openclaw', async () => {
@@ -989,7 +1029,7 @@ ipcMain.handle('start-openclaw', async () => {
     const onLog = (d) => {
       const s = d.toString('utf8')
       gatewayLog += s
-      if (gatewayLog.length > LOG_MAX * 2) gatewayLog = gatewayLog.slice(-LOG_MAX)
+      if (gatewayLog.length > LOG_MAX) gatewayLog = gatewayLog.slice(-LOG_MAX)
 
       const result = translateLog(s)
       if (result === null) {
@@ -1002,13 +1042,13 @@ ipcMain.handle('start-openclaw', async () => {
     }
     openclawProc.stdout.on('data', onLog)
     openclawProc.stderr.on('data', onLog)
-    updatePetStatus(true)
+    openclawStartedAt = Date.now()
 
-    const startTime = Date.now()
+    const startTime = openclawStartedAt
     openclawProc.on('exit', async (code) => {
       openclawProc = null
+      openclawStartedAt = null
       currentGatewayToken = null
-      updatePetStatus(false)
 
       const uptime = Date.now() - startTime
 
@@ -1204,11 +1244,63 @@ ipcMain.handle('update-api-key', async (_, payload) => {
     }
     await fs.promises.writeFile(setupFile, JSON.stringify(setup, null, 2), 'utf8')
 
+    // 同步到 agent 的 models.json + auth-profiles.json（openclaw 子 agent 直接读这两个，
+    // 不会自动从 openclaw.json 再读一次；不同步的话用户保存了新 key 也没生效）
+    try {
+      await syncAgentAuth(cfg, newKey, provider)
+    } catch (e) {
+      console.warn('[update-api-key] syncAgentAuth failed:', e.message)
+    }
+
     return { ok: true, provider }
   } catch (e) {
     return { ok: false, error: e.message }
   }
 })
+
+// 把最新 key 同步到 agents/main/agent/{models.json, auth-profiles.json}
+async function syncAgentAuth(cfg, key, provider) {
+  const agentDir = path.join(configDir, 'agents', 'main', 'agent')
+  if (!fs.existsSync(agentDir)) return  // 首次启动 openclaw 之前，agent 目录还没创建
+
+  // 灵境/自定义/openai 类通通归一到 "openai" provider
+  const providerKey = (provider === 'anthropic') ? 'anthropic' : 'openai'
+
+  // ① models.json
+  const modelsPath = path.join(agentDir, 'models.json')
+  if (fs.existsSync(modelsPath)) {
+    try {
+      const m = JSON.parse(await fs.promises.readFile(modelsPath, 'utf8'))
+      m.providers = m.providers || {}
+      const src = cfg.models?.providers?.[providerKey]
+      if (src) m.providers[providerKey] = { ...src }
+      await fs.promises.writeFile(modelsPath, JSON.stringify(m, null, 2), 'utf8')
+    } catch (e) {
+      console.warn('[syncAgentAuth] models.json failed:', e.message)
+    }
+  }
+
+  // ② auth-profiles.json
+  const authPath = path.join(agentDir, 'auth-profiles.json')
+  if (fs.existsSync(authPath)) {
+    try {
+      const ap = JSON.parse(await fs.promises.readFile(authPath, 'utf8'))
+      ap.profiles = ap.profiles || {}
+      ap.profiles[`${providerKey}:default`] = {
+        type: 'api_key',
+        provider: providerKey,
+        key,
+      }
+      ap.lastGood = ap.lastGood || {}
+      ap.lastGood[providerKey] = `${providerKey}:default`
+      await fs.promises.writeFile(authPath, JSON.stringify(ap, null, 2), 'utf8')
+      // POSIX 下限本用户读写；Windows 静默 no-op（需 ACL，Electron 不暴露）
+      try { await fs.promises.chmod(authPath, 0o600) } catch {}
+    } catch (e) {
+      console.warn('[syncAgentAuth] auth-profiles.json failed:', e.message)
+    }
+  }
+}
 
 // ─── IPC: Validate API Key ────────────────────────────────────────────────
 
@@ -1271,9 +1363,20 @@ ipcMain.handle('validate-api-key', async (_, { key, provider, baseUrl }) => {
         headers: validatorConfig.headers,
         timeout: 15000,
       }, (res) => {
+        const MAX_BODY = 1024 * 1024  // 1 MB 上限，防止恶意/误配服务商返回超大响应
         let data = ''
-        res.on('data', chunk => data += chunk)
+        let aborted = false
+        res.on('data', chunk => {
+          if (aborted) return
+          data += chunk
+          if (data.length > MAX_BODY) {
+            aborted = true
+            try { req.destroy() } catch {}
+            done({ ok: false, error: '响应过大，已中止（>1MB）' })
+          }
+        })
         res.on('end', () => {
+          if (aborted) return
           if (res.statusCode === 401 || res.statusCode === 403) {
             let msg = 'API Key 无效或已过期'
             try {
@@ -1318,10 +1421,23 @@ ipcMain.handle('check-skill-installed', async (_, skillId) => {
   return { installed }
 })
 
+// 安装命令参数白名单：只允许安全字符（字母数字、@./\-_:+、https 绝对 URL）
+const SKILL_INSTALL_ARG_RE = /^(-y|--yes|install|plugins|[a-zA-Z0-9@._:+\-\/]+|https:\/\/[a-zA-Z0-9._\-\/%+?=&#]+)$/
+const SKILL_INSTALL_CMDS = new Set(['npx', 'openclaw'])
+
 ipcMain.handle('install-skill', async (_, cmdArray) => {
   // cmdArray: ['npx', '-y', 'https://...tgz', 'install'] 或 ['openclaw', 'plugins', 'install', 'name']
   if (!Array.isArray(cmdArray) || cmdArray.length < 2) {
     return { ok: false, error: '无效的安装命令' }
+  }
+  if (!SKILL_INSTALL_CMDS.has(cmdArray[0])) {
+    return { ok: false, error: '不允许的命令前缀: ' + cmdArray[0] }
+  }
+  for (let i = 1; i < cmdArray.length; i++) {
+    const a = cmdArray[i]
+    if (typeof a !== 'string' || !SKILL_INSTALL_ARG_RE.test(a)) {
+      return { ok: false, error: '非法参数: ' + a }
+    }
   }
 
   const nodePath = getNodePath()
@@ -1536,19 +1652,282 @@ ipcMain.handle('install-feishu-plugin', async () => {
   return { ok: true }
 })
 
-// ─── IPC: Version / License ───────────────────────────────────────────────
+// ─── IPC: Version ─────────────────────────────────────────────────────────
 
 ipcMain.handle('get-version', () => app.getVersion())
 
-ipcMain.handle('get-license-info', async () => {
-  const drive = path.resolve(usbRoot).charAt(0).toUpperCase()
-  let serial = '未知'
-  try { serial = await getVolSerial(drive) } catch {}
+// ─── IPC: Auth (V5) ───────────────────────────────────────────────────────
+// 统一错误封装：renderer 拿到 { ok: true, data } 或 { ok: false, error: {status,code,message} }
+function wrapAuth(label, fn) {
+  return async (...args) => {
+    try {
+      const data = await fn(...args)
+      pushLoginDebug('info', `${label} OK`)
+      return { ok: true, data }
+    } catch (e) {
+      const err = {
+        status: e && e.status != null ? e.status : 0,
+        code: e && e.code != null ? e.code : null,
+        message: (e && e.message) || '未知错误',
+      }
+      pushLoginDebug('error', `${label} FAIL: ${err.message} (status=${err.status}, code=${err.code})`)
+      return { ok: false, error: err }
+    }
+  }
+}
+
+ipcMain.handle('auth:send-code', wrapAuth('send-code', async (_e, email) => {
+  if (!authManager) throw new Error('AuthManager not initialized')
+  return await authManager.sendCode(email)
+}))
+
+ipcMain.handle('auth:register', wrapAuth('register', async (_e, payload) => {
+  if (!authManager) throw new Error('AuthManager not initialized')
+  return await authManager.register(payload)
+}))
+
+ipcMain.handle('auth:login', wrapAuth('login', async (_e, payload) => {
+  if (!authManager) throw new Error('AuthManager not initialized')
+  return await authManager.login(payload)
+}))
+
+ipcMain.handle('auth:logout', wrapAuth('logout', async () => {
+  if (!authManager) throw new Error('AuthManager not initialized')
+  await authManager.logout()
+  return { ok: true }
+}))
+
+ipcMain.handle('auth:is-logged-in', wrapAuth('is-logged-in', async () => {
+  return authManager ? authManager.isLoggedIn() : false
+}))
+
+ipcMain.handle('auth:get-user', wrapAuth('get-user', async () => {
+  return authManager ? authManager.getUserProfile() : null
+}))
+
+ipcMain.handle('auth:refresh-user', wrapAuth('refresh-user', async () => {
+  if (!authManager) return null
+  return await authManager.refreshUserProfile()
+}))
+
+ipcMain.handle('auth:reload', wrapAuth('reload', async () => {
+  if (!authManager) throw new Error('AuthManager not initialized')
+  return await authManager.load()
+}))
+
+// ─── IPC: 登录窗控制 ──────────────────────────────────────────────────────
+
+ipcMain.on('login-win:minimize', (e) => {
+  const w = BrowserWindow.fromWebContents(e.sender)
+  if (w && !w.isDestroyed()) w.minimize()
+})
+
+ipcMain.on('login-win:close', (e) => {
+  const w = BrowserWindow.fromWebContents(e.sender)
+  if (w && !w.isDestroyed()) w.close()
+})
+
+ipcMain.on('login-win:transition-to-main', () => {
+  transitionLoginToMain()
+})
+
+// ─── IPC: 主窗口控制 ─────────────────────────────────────────────────────
+
+ipcMain.handle('main-win:logout', async () => {
+  try {
+    if (authManager) await authManager.logout()
+  } catch (e) {
+    console.error('[main-win:logout] authManager.logout failed:', e.message)
+  }
+  transitionMainToLogin()
+  return { ok: true }
+})
+
+ipcMain.on('main-win:transition-to-login', () => {
+  transitionMainToLogin()
+})
+
+// ─── IPC: V5 Token 管理 + 模型目录 ───────────────────────────────────────
+// 默认 token 配置：永不过期 + 不限额 + 全模型
+const DEFAULT_TOKEN_NAME = 'launcher-default'
+function defaultTokenPayload(name = DEFAULT_TOKEN_NAME) {
   return {
-    version:  app.getVersion(),
-    serial,
-    platform: process.platform,
-    arch:     process.arch,
+    name,
+    expired_time: -1,
+    remain_quota: 0,
+    unlimited_quota: true,
+    models: null,
+  }
+}
+
+// 拉已有 token；为空时自动创建一个 launcher-default；返回首个 token 的完整记录
+ipcMain.handle('token:list-or-create', async () => {
+  if (!authManager || !authManager.isLoggedIn()) {
+    return { ok: false, error: { message: 'Not logged in' } }
+  }
+  try {
+    const list = await authManager.apiClient.get('/api/token/')
+    if (Array.isArray(list) && list.length > 0) {
+      return { ok: true, data: list[0] }
+    }
+    // 空列表 → 创建一个
+    const created = await authManager.apiClient.post('/api/token/', defaultTokenPayload())
+    return { ok: true, data: created }
+  } catch (e) {
+    return { ok: false, error: { message: e.message, status: e.status || 0, code: e.code || null } }
+  }
+})
+
+// 重置 token：删旧 + 建新
+ipcMain.handle('token:reset', async () => {
+  if (!authManager || !authManager.isLoggedIn()) {
+    return { ok: false, error: { message: 'Not logged in' } }
+  }
+  try {
+    const list = await authManager.apiClient.get('/api/token/')
+    if (Array.isArray(list)) {
+      for (const t of list) {
+        try { await authManager.apiClient.del(`/api/token/${t.id}`) } catch {}
+      }
+    }
+    const created = await authManager.apiClient.post('/api/token/', defaultTokenPayload())
+    return { ok: true, data: created }
+  } catch (e) {
+    return { ok: false, error: { message: e.message, status: e.status || 0, code: e.code || null } }
+  }
+})
+
+// 拉官方已上架的模型目录（公开接口，无需 cookie）
+ipcMain.handle('models:list-official', async () => {
+  if (!authManager) {
+    return { ok: false, error: { message: 'AuthManager not initialized' } }
+  }
+  try {
+    const list = await authManager.apiClient.get('/api/lingjing/model-prices', { auth: false })
+    const visible = Array.isArray(list) ? list.filter(m => m.is_visible !== false) : []
+    visible.sort((a, b) => (a.sort_order || 0) - (b.sort_order || 0))
+    return { ok: true, data: visible }
+  } catch (e) {
+    return { ok: false, error: { message: e.message, status: e.status || 0, code: e.code || null } }
+  }
+})
+
+// ─── IPC: V5 充值（灵境AI 聚合支付）─────────────────────────────────────
+function topupErrWrap(fn) {
+  return async (...args) => {
+    if (!authManager) return { ok: false, error: { message: 'AuthManager not initialized' } }
+    try {
+      const data = await fn(...args)
+      return { ok: true, data }
+    } catch (e) {
+      return { ok: false, error: { message: e.message, status: e.status || 0, code: e.code || null } }
+    }
+  }
+}
+
+// 套餐列表（公开）
+ipcMain.handle('topup:list-plans', topupErrWrap(async () => {
+  const list = await authManager.apiClient.get('/api/lingjing/plans', { auth: false })
+  const visible = Array.isArray(list) ? list.filter(p => p.is_available !== false) : []
+  visible.sort((a, b) => (a.sort_order || 0) - (b.sort_order || 0) || a.price - b.price)
+  return visible
+}))
+
+// 支付方式开关（公开）
+ipcMain.handle('topup:pay-config', topupErrWrap(async () => {
+  return await authManager.apiClient.get('/api/lingjing/pay/config', { auth: false })
+}))
+
+// 创建订单：返回 { pay_url, order_no, amount, quota }
+ipcMain.handle('topup:create-order', topupErrWrap(async (_e, { planId, payType }) => {
+  return await authManager.apiClient.post('/api/lingjing/pay/create', {
+    plan_id: planId,
+    pay_type: payType || 'alipay',
+  })
+}))
+
+// 查订单状态：status 0=pending, 1=paid
+ipcMain.handle('topup:order-status', topupErrWrap(async (_e, orderNo) => {
+  return await authManager.apiClient.get(`/api/lingjing/pay/order/${encodeURIComponent(orderNo)}`)
+}))
+
+// 兑换码
+ipcMain.handle('topup:redeem', topupErrWrap(async (_e, key) => {
+  return await authManager.apiClient.post('/api/user/topup', { key })
+}))
+
+// ─── IPC: V5 技能列表（扫描已安装技能）──────────────────────────────────
+// SKILL.md 格式：以 --- 包住的 YAML frontmatter，包含 name / description 等字段
+function parseSkillFrontmatter(content) {
+  const m = content.match(/^---\s*\n([\s\S]*?)\n---/)
+  if (!m) return {}
+  const body = m[1]
+  const meta = {}
+  let currentKey = null
+  let currentVal = []
+  const flush = () => {
+    if (currentKey) meta[currentKey] = currentVal.join('\n').trim()
+  }
+  for (const line of body.split(/\r?\n/)) {
+    const kv = line.match(/^([a-zA-Z_][\w-]*)\s*:\s*(.*)$/)
+    if (kv) {
+      flush()
+      currentKey = kv[1]
+      const v = kv[2].trim()
+      currentVal = v === '|' || v === '|-' || v === '' ? [] : [v]
+    } else if (currentKey) {
+      currentVal.push(line.replace(/^\s{2,}/, ''))
+    }
+  }
+  flush()
+  return meta
+}
+
+// 支持页：拉客服配置（公开接口）
+ipcMain.handle('support:config', async () => {
+  if (!authManager) return { ok: false, error: { message: 'AuthManager not initialized' } }
+  try {
+    const data = await authManager.apiClient.get('/api/lingjing/config', { auth: false })
+    return { ok: true, data }
+  } catch (e) {
+    return { ok: false, error: { message: e.message, status: e.status || 0 } }
+  }
+})
+
+ipcMain.handle('skills:list', async () => {
+  const extRoot = path.join(configDir, 'extensions')
+  const skills = []
+  try {
+    if (!fs.existsSync(extRoot)) return { ok: true, data: [] }
+    const pluginDirs = fs.readdirSync(extRoot, { withFileTypes: true })
+      .filter(d => d.isDirectory() && !d.name.startsWith('.'))
+    for (const plug of pluginDirs) {
+      const skillsDir = path.join(extRoot, plug.name, 'skills')
+      if (!fs.existsSync(skillsDir)) continue
+      const skillDirs = fs.readdirSync(skillsDir, { withFileTypes: true })
+        .filter(d => d.isDirectory())
+      for (const s of skillDirs) {
+        const skillMd = path.join(skillsDir, s.name, 'SKILL.md')
+        if (!fs.existsSync(skillMd)) continue
+        let meta = {}
+        try {
+          const content = await fs.promises.readFile(skillMd, 'utf8')
+          meta = parseSkillFrontmatter(content)
+        } catch {}
+        const desc = (meta.description || '').split(/\n/)[0].trim()
+        skills.push({
+          id: s.name,
+          name: meta.name || s.name,
+          description: desc || '—',
+          source: plug.name,
+          path: path.join(skillsDir, s.name),
+        })
+      }
+    }
+    skills.sort((a, b) => (a.source + a.name).localeCompare(b.source + b.name))
+    return { ok: true, data: skills }
+  } catch (e) {
+    return { ok: false, error: { message: e.message } }
   }
 })
 

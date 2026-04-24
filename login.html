@@ -1,0 +1,711 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>OpenClaw · 登录</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&family=Noto+Sans+SC:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg-page: #08090D;
+  --bg-surface: #0F1218;
+  --bg-card: #151922;
+  --bg-card-hover: #1A1F2B;
+  --bg-elevated: #1D2230;
+  --bg-input: #10141C;
+
+  --border-subtle: #1F2433;
+  --border-default: #262C3B;
+  --border-strong: #323849;
+
+  --text-primary: #E8EAED;
+  --text-secondary: #A8ADBA;
+  --text-muted: #6B7080;
+  --text-subtle: #4A4F5E;
+
+  --brand: #E94B3C;
+  --brand-hover: #F15A4C;
+  --brand-dim: rgba(233, 75, 60, 0.12);
+  --brand-glow: rgba(233, 75, 60, 0.25);
+
+  --success: #4ADE80;
+  --danger:  #F87171;
+
+  --font-display: 'Fraunces', 'Noto Sans SC', serif;
+  --font-sans: 'Plus Jakarta Sans', 'Noto Sans SC', -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-mono: 'JetBrains Mono', 'SF Mono', monospace;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+html, body { height: 100%; overflow: hidden; user-select: none; }
+body {
+  font-family: var(--font-sans);
+  background: var(--bg-page);
+  color: var(--text-primary);
+  font-size: 14px;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ─── 窗口顶栏（可拖动） ───────────────────────────────── */
+.titlebar {
+  height: 36px;
+  background: #0B0E14;
+  border-bottom: 1px solid var(--border-subtle);
+  display: flex;
+  align-items: center;
+  padding: 0 14px;
+  gap: 12px;
+  -webkit-app-region: drag;
+}
+.titlebar .dots { display: flex; gap: 8px; -webkit-app-region: no-drag; }
+.titlebar .dot {
+  width: 10px; height: 10px; border-radius: 50%;
+  background: var(--border-default);
+  cursor: pointer;
+  transition: background 0.15s;
+}
+.titlebar .dot.close { background: var(--danger); }
+.titlebar .dot.close:hover { background: var(--brand-hover); }
+.titlebar .title {
+  font-size: 11px; color: var(--text-muted); letter-spacing: 0.02em;
+  margin-left: 4px;
+}
+.titlebar .title span { color: var(--text-secondary); }
+
+/* ─── 登录容器 ───────────────────────────────── */
+.login-container {
+  width: 100%;
+  height: calc(100% - 36px);
+  background:
+    radial-gradient(circle at 50% -20%, rgba(233, 75, 60, 0.08), transparent 60%),
+    var(--bg-surface);
+  position: relative;
+  overflow: hidden;
+}
+.login-container::before {
+  content: '';
+  position: absolute; inset: 0;
+  background-image:
+    linear-gradient(rgba(255,255,255,0.02) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255,255,255,0.02) 1px, transparent 1px);
+  background-size: 32px 32px;
+  -webkit-mask-image: radial-gradient(ellipse at center, black 20%, transparent 70%);
+          mask-image: radial-gradient(ellipse at center, black 20%, transparent 70%);
+  pointer-events: none;
+}
+
+.login-inner {
+  position: relative;
+  padding: 40px 48px 28px;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.login-brand { text-align: center; margin-bottom: 32px; }
+.login-brand .logo-mark {
+  width: 44px; height: 44px;
+  color: var(--brand);
+  margin: 0 auto 12px;
+  display: block;
+}
+.login-brand h1 {
+  font-family: var(--font-display);
+  font-size: 26px;
+  font-weight: 500;
+  letter-spacing: -0.02em;
+  margin-bottom: 4px;
+}
+.login-brand .version {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--text-muted);
+  letter-spacing: 0.1em;
+}
+
+.login-tabs {
+  display: flex;
+  background: var(--bg-input);
+  border: 1px solid var(--border-subtle);
+  border-radius: 8px;
+  padding: 3px;
+  margin-bottom: 20px;
+}
+.login-tab {
+  flex: 1;
+  padding: 8px;
+  text-align: center;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-muted);
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s;
+  user-select: none;
+}
+.login-tab.active {
+  background: var(--bg-elevated);
+  color: var(--text-primary);
+  box-shadow: 0 1px 2px rgba(0,0,0,0.2);
+}
+
+.form-field { margin-bottom: 14px; }
+.form-label {
+  display: block;
+  font-size: 12px;
+  color: var(--text-secondary);
+  margin-bottom: 6px;
+  font-weight: 500;
+}
+.form-input {
+  width: 100%;
+  height: 42px;
+  background: var(--bg-input);
+  border: 1px solid var(--border-subtle);
+  border-radius: 8px;
+  padding: 0 14px;
+  color: var(--text-primary);
+  font-size: 14px;
+  font-family: inherit;
+  transition: all 0.15s;
+  outline: none;
+}
+.form-input::placeholder { color: var(--text-subtle); }
+.form-input:focus {
+  border-color: var(--brand);
+  background: var(--bg-card);
+  box-shadow: 0 0 0 3px var(--brand-dim);
+}
+.form-input.error { border-color: var(--danger); }
+
+.code-row {
+  display: flex;
+  gap: 10px;
+  align-items: stretch;
+}
+.code-row .form-input { flex: 1; }
+.btn-send-code {
+  height: 42px;
+  padding: 0 14px;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-subtle);
+  border-radius: 8px;
+  color: var(--text-primary);
+  font-size: 12px;
+  font-family: inherit;
+  font-weight: 500;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.15s;
+  min-width: 110px;
+}
+.btn-send-code:hover:not(:disabled) {
+  background: var(--bg-card-hover);
+  border-color: var(--border-default);
+}
+.btn-send-code:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.btn-primary {
+  width: 100%;
+  height: 44px;
+  background: var(--brand);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s;
+  font-family: inherit;
+  position: relative;
+  overflow: hidden;
+  margin-top: 4px;
+}
+.btn-primary:hover:not(:disabled) {
+  background: var(--brand-hover);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 16px var(--brand-glow);
+}
+.btn-primary:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
+}
+.btn-primary .spinner { display: none; margin-left: 8px; }
+.btn-primary.loading .spinner { display: inline-block; animation: spin 0.8s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+
+.login-divider {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 22px 0 16px;
+  color: var(--text-muted);
+  font-size: 10px;
+  font-family: var(--font-mono);
+  letter-spacing: 0.1em;
+}
+.login-divider::before,
+.login-divider::after {
+  content: ''; flex: 1; height: 1px; background: var(--border-subtle);
+}
+
+.login-gift {
+  background: linear-gradient(135deg, rgba(233, 75, 60, 0.08), rgba(233, 75, 60, 0.02));
+  border: 1px solid rgba(233, 75, 60, 0.2);
+  border-radius: 10px;
+  padding: 14px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.login-gift .icon {
+  width: 34px; height: 34px;
+  border-radius: 8px;
+  background: var(--brand);
+  display: flex; align-items: center; justify-content: center;
+  color: white; flex-shrink: 0;
+}
+.login-gift .content { flex: 1; }
+.login-gift .title {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: 2px;
+}
+.login-gift .desc {
+  font-size: 11px;
+  color: var(--text-secondary);
+}
+
+.login-footer {
+  margin-top: auto;
+  padding-top: 18px;
+  display: flex;
+  justify-content: center;
+  gap: 24px;
+  font-size: 11px;
+  color: var(--text-muted);
+}
+.login-footer a {
+  color: var(--text-muted);
+  text-decoration: none;
+  cursor: pointer;
+  transition: color 0.15s;
+}
+.login-footer a:hover { color: var(--text-secondary); }
+
+.login-form { display: none; }
+.login-form.active { display: block; }
+
+/* ─── 诊断日志面板 ───────────────────────────────── */
+.debug-panel {
+  margin-top: 14px;
+  border: 1px solid var(--border-subtle);
+  border-radius: 8px;
+  background: var(--bg-input);
+  overflow: hidden;
+  font-family: var(--font-mono);
+  font-size: 10px;
+}
+.debug-panel-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 6px 10px;
+  background: var(--bg-card);
+  border-bottom: 1px solid var(--border-subtle);
+  cursor: pointer;
+  user-select: none;
+}
+.debug-panel-head .label {
+  color: var(--text-muted);
+  font-weight: 500;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+.debug-panel-head .actions {
+  display: flex;
+  gap: 8px;
+}
+.debug-panel-head button {
+  background: transparent;
+  border: 1px solid var(--border-subtle);
+  color: var(--text-muted);
+  font-family: inherit;
+  font-size: 10px;
+  padding: 2px 8px;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.debug-panel-head button:hover {
+  color: var(--text-primary);
+  border-color: var(--border-default);
+}
+.debug-panel-body {
+  max-height: 140px;
+  overflow-y: auto;
+  padding: 8px 10px;
+  color: var(--text-secondary);
+  line-height: 1.5;
+  white-space: pre-wrap;
+  word-break: break-all;
+}
+.debug-panel-body:empty::before {
+  content: '— 无日志 —';
+  color: var(--text-subtle);
+}
+.debug-panel.collapsed .debug-panel-body { display: none; }
+.debug-row { padding: 2px 0; }
+.debug-row.error { color: var(--danger); }
+.debug-row.info  { color: var(--text-secondary); }
+.debug-row .time { color: var(--text-subtle); margin-right: 6px; }
+
+#toast {
+  position: fixed;
+  top: 54px;
+  left: 50%;
+  transform: translateX(-50%) translateY(-20px);
+  background: var(--bg-card);
+  border: 1px solid var(--border-default);
+  border-radius: 8px;
+  padding: 10px 16px;
+  font-size: 13px;
+  color: var(--text-primary);
+  box-shadow: 0 8px 24px rgba(0,0,0,0.4);
+  opacity: 0;
+  transition: all 0.25s;
+  pointer-events: none;
+  z-index: 100;
+  max-width: 380px;
+}
+#toast.show {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+}
+#toast.error { border-color: var(--danger); color: var(--danger); }
+#toast.success { border-color: var(--success); color: var(--success); }
+</style>
+</head>
+<body>
+
+<svg width="0" height="0" style="position:absolute">
+  <defs>
+    <symbol id="logo-claw" viewBox="0 0 32 32">
+      <path d="M 16 4 A 12 12 0 1 1 7.03 24.97" stroke="currentColor" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+      <path d="M 16 11 A 5 5 0 1 1 12.46 19.54" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round"/>
+      <circle cx="21" cy="8" r="1.5" fill="currentColor"/>
+    </symbol>
+  </defs>
+</svg>
+
+<div class="titlebar">
+  <div class="dots">
+    <div class="dot" title="最小化" onclick="window.loginWin.minimize()"></div>
+    <div class="dot"></div>
+    <div class="dot close" title="关闭" onclick="window.loginWin.close()"></div>
+  </div>
+  <div class="title">OpenClaw · <span>登录</span></div>
+</div>
+
+<div class="login-container">
+  <div class="login-inner">
+    <div class="login-brand">
+      <div class="logo-mark"><svg><use href="#logo-claw"/></svg></div>
+      <h1>OpenClaw</h1>
+      <div class="version">PORTABLE · V5.0.0</div>
+    </div>
+
+    <div class="login-tabs">
+      <div class="login-tab active" data-tab="login">登录</div>
+      <div class="login-tab" data-tab="register">注册</div>
+    </div>
+
+    <form id="form-login" class="login-form active" novalidate>
+      <div class="form-field">
+        <label class="form-label">邮箱或用户名</label>
+        <input type="text" class="form-input" name="username" placeholder="your@email.com 或 用户名" autocomplete="username" required>
+      </div>
+      <div class="form-field">
+        <label class="form-label">密码</label>
+        <input type="password" class="form-input" name="password" placeholder="请输入密码" autocomplete="current-password" required>
+      </div>
+      <button type="submit" class="btn-primary">
+        <span class="btn-text">登 录</span><span class="spinner">⋯</span>
+      </button>
+    </form>
+
+    <form id="form-register" class="login-form" novalidate>
+      <div class="form-field">
+        <label class="form-label">邮箱</label>
+        <input type="email" class="form-input" name="email" placeholder="your@email.com" autocomplete="email" required>
+      </div>
+      <div class="form-field">
+        <label class="form-label">验证码</label>
+        <div class="code-row">
+          <input type="text" class="form-input" name="code" placeholder="6 位验证码" maxlength="6" inputmode="numeric" autocomplete="one-time-code" required>
+          <button type="button" class="btn-send-code" id="btn-send-code">发送验证码</button>
+        </div>
+      </div>
+      <div class="form-field">
+        <label class="form-label">密码（至少 6 位）</label>
+        <input type="password" class="form-input" name="password" placeholder="请输入密码" minlength="6" autocomplete="new-password" required>
+      </div>
+      <button type="submit" class="btn-primary">
+        <span class="btn-text">注 册</span><span class="spinner">⋯</span>
+      </button>
+    </form>
+
+    <div class="login-divider">WELCOME</div>
+
+    <div class="login-gift">
+      <div class="icon">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+          <polyline points="20 12 20 22 4 22 4 12"/>
+          <rect x="2" y="7" width="20" height="5"/>
+          <line x1="12" y1="22" x2="12" y2="7"/>
+          <path d="M12 7H7.5a2.5 2.5 0 0 1 0-5C11 2 12 7 12 7z"/>
+          <path d="M12 7h4.5a2.5 2.5 0 0 0 0-5C13 2 12 7 12 7z"/>
+        </svg>
+      </div>
+      <div class="content">
+        <div class="title">新用户专享 ¥20 体验额度</div>
+        <div class="desc">注册即送，无需充值立即使用 AI 能力</div>
+      </div>
+    </div>
+
+    <div class="debug-panel collapsed" id="debug-panel">
+      <div class="debug-panel-head" id="debug-panel-head">
+        <span class="label">▸ 运行日志</span>
+        <div class="actions">
+          <button id="btn-copy-log" type="button">复制全部</button>
+          <button id="btn-clear-log" type="button">清空</button>
+        </div>
+      </div>
+      <div class="debug-panel-body" id="debug-panel-body"></div>
+    </div>
+
+    <div class="login-footer">
+      <a id="link-privacy">隐私政策</a>
+      <a id="link-contact">联系客服</a>
+    </div>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<script>
+// ─── 运行日志面板 ──────────────────────────────────────────────────────
+const debugPanel = document.getElementById('debug-panel')
+const debugBody  = document.getElementById('debug-panel-body')
+const debugHead  = document.getElementById('debug-panel-head')
+const debugLabel = debugHead.querySelector('.label')
+
+function nowStr() {
+  const d = new Date()
+  return String(d.getHours()).padStart(2,'0') + ':' +
+         String(d.getMinutes()).padStart(2,'0') + ':' +
+         String(d.getSeconds()).padStart(2,'0') + '.' +
+         String(d.getMilliseconds()).padStart(3,'0')
+}
+
+function appendLog(level, msg) {
+  const row = document.createElement('div')
+  row.className = 'debug-row ' + (level || 'info')
+  row.textContent = `[${nowStr()}] ${msg}`
+  debugBody.appendChild(row)
+  debugBody.scrollTop = debugBody.scrollHeight
+  // 有错误时自动展开
+  if (level === 'error') debugPanel.classList.remove('collapsed')
+}
+
+debugHead.addEventListener('click', (e) => {
+  if (e.target.tagName === 'BUTTON') return
+  debugPanel.classList.toggle('collapsed')
+  const collapsed = debugPanel.classList.contains('collapsed')
+  debugLabel.textContent = (collapsed ? '▸ ' : '▾ ') + '运行日志'
+})
+
+document.getElementById('btn-copy-log').addEventListener('click', () => {
+  const rows = [...debugBody.querySelectorAll('.debug-row')].map(r => r.textContent)
+  if (!rows.length) { showToast('无日志可复制', 'error'); return }
+  navigator.clipboard.writeText(rows.join('\n')).then(
+    () => showToast('已复制 ' + rows.length + ' 行日志', 'success'),
+    () => showToast('复制失败，请手动选择', 'error')
+  )
+})
+document.getElementById('btn-clear-log').addEventListener('click', () => {
+  debugBody.innerHTML = ''
+})
+
+// 接收 main 进程推送的诊断日志
+if (window.loginWin && window.loginWin.onDebugLog) {
+  window.loginWin.onDebugLog((entry) => {
+    appendLog(entry?.level || 'info', entry?.message || String(entry))
+  })
+}
+
+appendLog('info', 'Login window ready')
+
+let toastTimer = null
+function showToast(msg, type = '') {
+  const el = document.getElementById('toast')
+  el.textContent = msg
+  el.className = ''
+  if (type) el.classList.add(type)
+  void el.offsetWidth
+  el.classList.add('show')
+  clearTimeout(toastTimer)
+  toastTimer = setTimeout(() => el.classList.remove('show'), 3200)
+}
+
+const tabs = document.querySelectorAll('.login-tab')
+const forms = {
+  login:    document.getElementById('form-login'),
+  register: document.getElementById('form-register'),
+}
+tabs.forEach(t => {
+  t.addEventListener('click', () => {
+    tabs.forEach(x => x.classList.remove('active'))
+    t.classList.add('active')
+    Object.values(forms).forEach(f => f.classList.remove('active'))
+    forms[t.dataset.tab].classList.add('active')
+  })
+})
+
+function isValidEmail(s) {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(s)
+}
+function setInputError(input, msg) {
+  input.classList.toggle('error', !!msg)
+  if (msg) showToast(msg, 'error')
+}
+function setButtonLoading(btn, loading) {
+  if (loading) { btn.classList.add('loading'); btn.disabled = true }
+  else         { btn.classList.remove('loading'); btn.disabled = false }
+}
+
+const btnSendCode = document.getElementById('btn-send-code')
+let codeCountdown = 0
+let codeTimer = null
+function tickCodeCountdown() {
+  if (codeCountdown <= 0) {
+    btnSendCode.textContent = '发送验证码'
+    btnSendCode.disabled = false
+    clearInterval(codeTimer)
+    return
+  }
+  btnSendCode.textContent = `${codeCountdown}s 后重发`
+  codeCountdown--
+}
+
+btnSendCode.addEventListener('click', async () => {
+  const emailInput = forms.register.querySelector('input[name="email"]')
+  const email = emailInput.value.trim()
+  if (!isValidEmail(email)) { setInputError(emailInput, '请先填写正确的邮箱'); return }
+  emailInput.classList.remove('error')
+
+  btnSendCode.disabled = true
+  btnSendCode.textContent = '发送中...'
+  appendLog('info', 'sendCode -> ' + email)
+
+  const r = await window.auth.sendCode(email)
+  if (!r.ok) {
+    btnSendCode.disabled = false
+    btnSendCode.textContent = '发送验证码'
+    appendLog('error', 'sendCode FAIL: ' + (r.error?.message || ''))
+    showToast(r.error?.message || '发送失败，请稍后再试', 'error')
+    return
+  }
+  appendLog('info', 'sendCode OK')
+  showToast('验证码已发送，请查收邮箱', 'success')
+  codeCountdown = 60
+  tickCodeCountdown()
+  codeTimer = setInterval(tickCodeCountdown, 1000)
+})
+
+forms.login.addEventListener('submit', async (e) => {
+  e.preventDefault()
+  const username = forms.login.username.value.trim()
+  const password = forms.login.password.value
+  if (!username) return setInputError(forms.login.username, '请输入邮箱或用户名')
+  if (!password) return setInputError(forms.login.password, '请输入密码')
+
+  const btn = forms.login.querySelector('.btn-primary')
+  setButtonLoading(btn, true)
+  appendLog('info', 'login -> ' + username)
+  try {
+    const r = await window.auth.login({ username, password })
+    if (!r.ok) {
+      appendLog('error', 'login FAIL: ' + (r.error?.message || '') +
+                        (r.error?.status ? ` (status=${r.error.status})` : '') +
+                        (r.error?.code ? ` (code=${r.error.code})` : ''))
+      showToast(r.error?.message || '登录失败', 'error')
+      return
+    }
+    appendLog('info', 'login OK, transitioning to main window')
+    showToast('登录成功，正在进入...', 'success')
+    setTimeout(() => window.loginWin.transitionToMain(), 500)
+  } finally {
+    setButtonLoading(btn, false)
+  }
+})
+
+// 从 email 前缀派生用户名（字母/数字/下划线，3 位随机后缀避重）
+function deriveUsername(email) {
+  const local = (email.split('@')[0] || '').toLowerCase()
+  const clean = local.replace(/[^a-z0-9_]/g, '_').slice(0, 20) || 'user'
+  const suffix = Math.floor(Math.random() * 900 + 100)  // 100-999
+  return `${clean}_${suffix}`
+}
+
+forms.register.addEventListener('submit', async (e) => {
+  e.preventDefault()
+  const email = forms.register.email.value.trim()
+  const code = forms.register.code.value.trim()
+  const password = forms.register.password.value
+  if (!isValidEmail(email)) return setInputError(forms.register.email, '邮箱格式不正确')
+  if (!/^\d{4,8}$/.test(code)) return setInputError(forms.register.code, '验证码格式不正确')
+  if (password.length < 6) return setInputError(forms.register.password, '密码至少 6 位')
+
+  const username = deriveUsername(email)
+
+  const btn = forms.register.querySelector('.btn-primary')
+  setButtonLoading(btn, true)
+  appendLog('info', `register -> email=${email}, username=${username}`)
+  try {
+    const r = await window.auth.register({
+      username,
+      email,
+      password,
+      verification_code: code,
+    })
+    if (!r.ok) {
+      appendLog('error', 'register FAIL: ' + (r.error?.message || '') +
+                        (r.error?.status ? ` (status=${r.error.status})` : ''))
+      showToast(r.error?.message || '注册失败', 'error')
+      return
+    }
+    appendLog('info', 'register OK, transitioning to main window')
+    showToast('注册成功，正在进入...', 'success')
+    setTimeout(() => window.loginWin.transitionToMain(), 500)
+  } finally {
+    setButtonLoading(btn, false)
+  }
+})
+
+document.getElementById('link-privacy').addEventListener('click', () => {
+  window.loginWin.openExternal('https://aitoken.homes/privacy')
+})
+document.getElementById('link-contact').addEventListener('click', () => {
+  window.loginWin.openExternal('https://aitoken.homes/contact')
+})
+</script>
+</body>
+</html>
